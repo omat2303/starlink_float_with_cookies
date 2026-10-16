@@ -1,0 +1,25 @@
+[Unit]
+Description=StarPanel Backend (FastAPI)
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/starpanel/backend
+EnvironmentFile=/opt/starpanel/backend/.env
+ExecStart=/opt/starpanel/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers
+Restart=always
+RestartSec=5
+
+# Aislamiento: sólo puede escribir dentro de su carpeta (DB y .session.enc/.key).
+# UMask 0077: la DB, .session.enc y .session.key se crean 600 (no legibles por otros
+# usuarios del VPS). Sin esto salen 644 con el umask por defecto.
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/starpanel/backend
+
+[Install]
+WantedBy=multi-user.target

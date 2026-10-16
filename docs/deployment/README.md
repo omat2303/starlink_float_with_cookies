@@ -1,0 +1,174 @@
+# StarPanel — despliegue en VPS
+
+Guía para dejar el panel en `https://star.ogtelecom.org` sin la puerta abierta.
+Sustituye `star.ogtelecom.org` si cambia el dominio.
+
+## Arquitectura
+
+```
+navegador ──TLS──> nginx ──> Next.js  :3000   (páginas, detrás de auth_request)
+                     │
+                     ├──> FastAPI :8000       (API, detrás de auth_request)
+                     └──> /api/auth/login      (extensión, X-Ingest-Token)
+
+backend :8000 y frontend :3000 escuchan SÓLO en 127.0.0.1 (nunca expuestos).
+```
+
+Dos puertas independientes:
+1. **Panel (OG)** — contraseña → cookie `sp_session` firmada (HMAC), httpOnly/Secure.
+   nginx valida la cookie con `auth_request` en cada petición.
+2. **Extensión** — sube la cookie de Starlink con `X-Ingest-Token`.
+
+## 1. Requisitos
+
+```bash
+sudo apt update
+sudo apt install -y nginx python3-venv python3-pip nodejs npm certbot python3-certbot-nginx fail2ban
+```
+
+DNS: un registro `A` de `star.ogtelecom.org` apuntando a la IP del VPS.
+
+## 2. Código y estructura
+
+```bash
+sudo mkdir -p /opt/starpanel
+sudo chown -R www-data:www-data /opt/starpanel
+# copiar el repo a /opt/starpanel  (git clone o scp)
+```
+
+Backend:
+
+```bash
+cd /opt/starpanel/backend
+sudo -u www-data python3 -m venv venv
+sudo -u www-data venv/bin/pip install -r requirements.txt
+```
+
+Need: el backend usa SQLite (`starlink_fleet.db`) y la carpeta debe ser escribible
+por `www-data` (la unidad ya le da `ReadWritePaths`).
+
+Frontend:
+
+```bash
+cd /opt/starpanel/frontend
+sudo -u www-data npm ci
+sudo -u www-data npm run build        # el build NO necesita el backend
+```
+
+## 3. Secretos
+
+```bash
+cd /opt/starpanel/backend
+sudo -u www-data venv/bin/python make_secrets.py 'TU_CONTRASEÑA_FUERTE'
+```
+
+Copia la salida a `/opt/starpanel/backend/.env` (plantilla: `deploy/backend.env.example`):
+
+```bash
+sudo cp deploy/backend.env.example /opt/starpanel/backend/.env
+sudo nano /opt/starpanel/backend/.env      # pega los tres valores
+sudo chown www-data:www-data /opt/starpanel/backend/.env
+sudo chmod 600 /opt/starpanel/backend/.env
+```
+
+Frontend:
+
+```bash
+sudo cp deploy/frontend.env.example /opt/starpanel/frontend/.env.production
+```
+
+Con `APP_ENV=production`, el backend **no arranca** si falta alguno de los tres secretos.
+
+## 4. systemd
+
+```bash
+sudo cp deploy/starpanel-backend.service.example  /etc/systemd/system/starpanel-backend.service
+sudo cp deploy/starpanel-frontend.service.example /etc/systemd/system/starpanel-frontend.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now starpanel-backend starpanel-frontend
+systemctl status starpanel-backend starpanel-frontend --no-pager
+```
+
+## 5. nginx + TLS
+
+```bash
+sudo cp docs/deployment/nginx-starpanel-limits.conf /etc/nginx/conf.d/starpanel-limits.conf
+sudo cp docs/deployment/nginx-starpanel.conf        /etc/nginx/sites-available/starpanel
+sudo ln -s /etc/nginx/sites-available/starpanel /etc/nginx/sites-enabled/starpanel
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Certificado (primero crea el `server` de 80 y responde el challenge; puedes usar el
+`--nginx` de certbot sobre el dominio):
+
+```bash
+sudo certbot --nginx -d star.ogtelecom.org
+```
+
+## 6. Firewall y fail2ban
+
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow 'Nginx Full'
+sudo ufw enable
+```
+
+fail2ban para el login (opcional pero recomendado): crea
+`/etc/fail2ban/jail.d/starpanel.local`
+
+```ini
+[starpanel]
+enabled = true
+port = http,https
+filter = starpanel
+logpath = /var/log/nginx/access.log
+maxretry = 10
+findtime = 600
+bantime = 3600
+```
+
+y `/etc/fail2ban/filter.d/starpanel.conf`
+
+```ini
+[Definition]
+failregex = ^<HOST> .* "POST /api/panel/session HTTP/[0-9.]+" 401
+ignoreregex =
+```
+
+```bash
+sudo systemctl restart fail2ban
+```
+
+## 7. Extensión de Chrome
+
+1. Carga `extension/` como extensión sin empaquetar (`chrome://extensions` → modo desarrollador).
+2. Abre las opciones de la extensión y pega el `INGEST_TOKEN` del `.env`.
+3. En el panel (`https://star.ogtelecom.org`), pulsa **Traer cookie y sincronizar**
+   con la sesión de starlink.com abierta en el mismo perfil de Chrome.
+
+## 8. Verificación
+
+```bash
+# Sin sesión: el panel redirige al login y la API responde 401.
+curl -sI https://star.ogtelecom.org/          | head -1   # 302 → /login
+curl -s  -o /dev/null -w '%{http_code}\n' https://star.ogtelecom.org/api/v1/clientes   # 401
+curl -s  -o /dev/null -w '%{http_code}\n' https://star.ogtelecom.org/api/auth/login -X POST  # 401
+
+# Tipos MIME y HSTS.
+curl -sI https://star.ogtelecom.org/login | findstr /i "strict-transport x-content-type x-frame"
+
+# El backend no está expuesto:
+curl -s -o /dev/null -w '%{http_code}\n' http://<IP>:8000/api/v1/clientes   # timeout/refused
+```
+
+En el navegador: entra con la contraseña, el panel carga; `Salir` vuelve al login.
+
+## Actualizar
+
+```bash
+cd /opt/starpanel && sudo -u www-data git pull
+sudo -u www-data backend/venv/bin/pip install -r backend/requirements.txt
+sudo -u www-data bash -c 'cd frontend && npm ci && npm run build'
+sudo systemctl restart starpanel-backend starpanel-frontend
+```

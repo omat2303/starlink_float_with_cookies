@@ -1,0 +1,47 @@
+# Entornos
+.env
+.env.local
+.env.*.local
+frontend/.env*
+backend/venv/
+frontend/node_modules/
+frontend/.next/
+.next/
+
+# Secretos de sesión (NUNCA al repo)
+backend/.session.enc
+backend/.session.key
+backend/.starlink_cookies.json
+spike/cookie.txt
+
+# Base de datos local
+*.db
+*.db-wal
+*.db-shm
+
+# Volcados de depuración
+raw_sl.json
+
+# Documentos internos (no se publican)
+SECURITY_AUDIT.md
+docs/superpowers/
+
+# Scratch de superpowers
+.superpowers/
+
+# Helpers de arranque local sin login (solo dev)
+_dev_*.ps1
+_dev_*.bat
+_dev_logs/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Builds
+*.tsbuildinfo
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
