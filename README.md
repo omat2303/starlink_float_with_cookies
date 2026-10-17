@@ -65,6 +65,9 @@ Plantillas listas para copiar en `deploy/*.env.example`.
 
 ### Extensión de Chrome (una sola vez)
 
+Antes de cargarla, pon tu dominio (el del panel) en `extension/manifest.json` y
+`extension/background.js`: el repo trae `panel.ejemplo.org` de ejemplo.
+
 `chrome://extensions` → activa **Modo de desarrollador** → **Cargar descomprimida**
 → elige la carpeta `extension/` → abre sus opciones y pega el `INGEST_TOKEN`.
 
@@ -127,8 +130,8 @@ con `opencode` abierto en la raíz, las herramientas aparecen como
 
 ## Despliegue
 
-Guía completa para VPS (nginx, TLS, systemd, fail2ban):
-[`docs/deployment/README.md`](docs/deployment/README.md).
+Todavía **no hay instancia pública**. Guía completa para VPS (nginx, TLS,
+systemd, fail2ban): [`docs/deployment/README.md`](docs/deployment/README.md).
 
 ## Aviso
 
@@ -141,3 +144,8 @@ servicio de Starlink.
 - Login multi-tenant por invitación (fase 2).
 - Alertas por WhatsApp.
 - Conversión de monedas: cada saldo va con su moneda, nunca se suma un total.
+
+## Licencia
+
+MIT — ver [`LICENSE`](LICENSE). Puedes usarlo, modificarlo y redistribuirlo,
+incluso comercialmente, manteniendo el aviso de copyright.

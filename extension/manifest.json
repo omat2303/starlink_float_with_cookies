@@ -7,14 +7,14 @@
   "host_permissions": [
     "https://starlink.com/*",
     "https://*.starlink.com/*",
-    "https://star.ogtelecom.org/*"
+    "https://panel.ejemplo.org/*"
   ],
   "background": { "service_worker": "background.js" },
   "action": { "default_title": "Enviar sesión de Starlink a StarPanel" },
   "options_page": "options.html",
   "content_scripts": [
     {
-      "matches": ["https://star.ogtelecom.org/*"],
+      "matches": ["https://panel.ejemplo.org/*"],
       "js": ["panel.js"]
     }
   ]

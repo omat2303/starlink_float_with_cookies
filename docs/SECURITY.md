@@ -50,6 +50,9 @@ disco     ──[4]──> backend
 
 ## Verificación de cada control
 
+Se ejecutan con el panel ya desplegado (hoy no hay instancia pública): `panel.ejemplo.org`
+es el dominio de ejemplo, cámbialo por el tuyo.
+
 ```bash
 # 1. Fallo cerrado sin secretos (debe imprimir RuntimeError)
 cd backend && APP_ENV=production python -c "import config; config.startup_check()"
@@ -59,14 +62,14 @@ APP_ENV=production PANEL_SESSION_SECRET=x INGEST_TOKEN=y PANEL_PASSWORD_HASH=z \
   python -c "import config; config.startup_check()"
 
 # 3. La API no se sirve sin sesión de panel
-curl -s -o /dev/null -w '%{http_code}\n' https://star.ogtelecom.org/api/v1/clientes   # 401
+curl -s -o /dev/null -w '%{http_code}\n' https://panel.ejemplo.org/api/v1/clientes   # 401
 
 # 4. La ingesta exige token
-curl -s -o /dev/null -w '%{http_code}\n' -X POST https://star.ogtelecom.org/api/auth/login \
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://panel.ejemplo.org/api/auth/login \
      -H 'Content-Type: application/json' -d '{"cookie":"a=b"}'                        # 401
 
 # 5. Cabeceras de seguridad presentes
-curl -sI https://star.ogtelecom.org/login | grep -Ei 'strict-transport|x-content-type|x-frame'
+curl -sI https://panel.ejemplo.org/login | grep -Ei 'strict-transport|x-content-type|x-frame'
 
 # 6. El backend no escucha fuera de localhost
 ss -ltnp | grep 8000      # debe mostrar 127.0.0.1:8000

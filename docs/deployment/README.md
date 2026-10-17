@@ -1,7 +1,10 @@
 # StarPanel — despliegue en VPS
 
-Guía para dejar el panel en `https://star.ogtelecom.org` sin la puerta abierta.
-Sustituye `star.ogtelecom.org` si cambia el dominio.
+Guía para dejar el panel en `https://panel.ejemplo.org` sin la puerta abierta.
+
+> **Estado: sin desplegar.** No hay ninguna instancia pública en funcionamiento.
+> Los comandos de abajo son la receta a seguir; sustituye `panel.ejemplo.org` por
+> tu dominio real en cada paso (nginx, certbot, DNS y `PANEL_ORIGIN`).
 
 ## Arquitectura
 
@@ -26,7 +29,7 @@ sudo apt update
 sudo apt install -y nginx python3-venv python3-pip nodejs npm certbot python3-certbot-nginx fail2ban
 ```
 
-DNS: un registro `A` de `star.ogtelecom.org` apuntando a la IP del VPS.
+DNS: un registro `A` de `panel.ejemplo.org` apuntando a la IP del VPS.
 
 ## 2. Código y estructura
 
@@ -103,7 +106,7 @@ Certificado (primero crea el `server` de 80 y responde el challenge; puedes usar
 `--nginx` de certbot sobre el dominio):
 
 ```bash
-sudo certbot --nginx -d star.ogtelecom.org
+sudo certbot --nginx -d panel.ejemplo.org
 ```
 
 ## 6. Firewall y fail2ban
@@ -144,19 +147,19 @@ sudo systemctl restart fail2ban
 
 1. Carga `extension/` como extensión sin empaquetar (`chrome://extensions` → modo desarrollador).
 2. Abre las opciones de la extensión y pega el `INGEST_TOKEN` del `.env`.
-3. En el panel (`https://star.ogtelecom.org`), pulsa **Traer cookie y sincronizar**
+3. En el panel (`https://panel.ejemplo.org`), pulsa **Traer cookie y sincronizar**
    con la sesión de starlink.com abierta en el mismo perfil de Chrome.
 
 ## 8. Verificación
 
 ```bash
 # Sin sesión: el panel redirige al login y la API responde 401.
-curl -sI https://star.ogtelecom.org/          | head -1   # 302 → /login
-curl -s  -o /dev/null -w '%{http_code}\n' https://star.ogtelecom.org/api/v1/clientes   # 401
-curl -s  -o /dev/null -w '%{http_code}\n' https://star.ogtelecom.org/api/auth/login -X POST  # 401
+curl -sI https://panel.ejemplo.org/          | head -1   # 302 → /login
+curl -s  -o /dev/null -w '%{http_code}\n' https://panel.ejemplo.org/api/v1/clientes   # 401
+curl -s  -o /dev/null -w '%{http_code}\n' https://panel.ejemplo.org/api/auth/login -X POST  # 401
 
 # Tipos MIME y HSTS.
-curl -sI https://star.ogtelecom.org/login | findstr /i "strict-transport x-content-type x-frame"
+curl -sI https://panel.ejemplo.org/login | findstr /i "strict-transport x-content-type x-frame"
 
 # El backend no está expuesto:
 curl -s -o /dev/null -w '%{http_code}\n' http://<IP>:8000/api/v1/clientes   # timeout/refused
