@@ -26,7 +26,12 @@ Dos puertas independientes:
 
 ```bash
 sudo apt update
-sudo apt install -y nginx python3-venv python3-pip nodejs npm certbot python3-certbot-nginx fail2ban
+sudo apt install -y nginx python3-venv python3-pip certbot python3-certbot-nginx fail2ban
+
+# Node 20 desde NodeSource: el de apt en Ubuntu 22.04 es viejo y Next.js 16
+# exige >= 20.9.
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
 ```
 
 DNS: un registro `A` de `panel.ejemplo.org` apuntando a la IP del VPS.
