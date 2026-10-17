@@ -147,5 +147,12 @@ servicio de Starlink.
 
 ## Licencia
 
-MIT — ver [`LICENSE`](LICENSE). Puedes usarlo, modificarlo y redistribuirlo,
-incluso comercialmente, manteniendo el aviso de copyright.
+AGPL-3.0 — ver [`LICENSE`](LICENSE).
+
+Copyright (C) 2026 omat2303
+
+Puedes usar, modificar y desplegar este programa, incluso comercialmente y en
+tu propio negocio. La única condición: si lo modificas y lo ofreces como
+servicio a terceros (por ejemplo, tu propia versión del panel en la web), tienes
+que publicar tu código fuente bajo esta misma licencia. Eso evita que alguien lo
+cierre y lo revenda.
