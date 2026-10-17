@@ -21,3 +21,16 @@ def test_clear(tmp_path):
     session_store.clear(path=f)
     assert session_store.load(path=f, key_path=k) == {}
     assert not Path(f).exists()
+
+
+def test_session_dir_env_mueve_los_ficheros(tmp_path, monkeypatch):
+    import importlib
+
+    monkeypatch.setenv("SESSION_DIR", str(tmp_path))
+    recargado = importlib.reload(session_store)
+    try:
+        assert recargado.SESSION_FILE.parent == tmp_path
+        assert recargado.KEY_FILE.parent == tmp_path
+    finally:
+        monkeypatch.delenv("SESSION_DIR", raising=False)
+        importlib.reload(session_store)

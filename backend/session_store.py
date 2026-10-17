@@ -7,16 +7,16 @@ shortcut: llave y secreto en archivos locales; upgrade a KMS/secret manager
 cuando el panel salga de la laptop.
 """
 import json
+import os
 from pathlib import Path
 
 from cryptography.fernet import Fernet, InvalidToken
 
 _BASE = Path(__file__).resolve().parent
-SESSION_FILE = _BASE / ".session.enc"
-KEY_FILE = _BASE / ".session.key"
-
-
-import os
+# SESSION_DIR saca la bóveda del código para que viva en un volumen (Docker).
+_DATA = Path(os.getenv("SESSION_DIR", str(_BASE)))
+SESSION_FILE = _DATA / ".session.enc"
+KEY_FILE = _DATA / ".session.key"
 
 
 def _fernet(key_path: Path | None = None) -> Fernet:
