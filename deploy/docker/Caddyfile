@@ -1,0 +1,21 @@
+# Caddy en el borde: sólo dos trabajos, TLS automático y reenviar a nginx.
+#
+# El dominio sale de DOMAIN y el correo de ACME (avisos de Let's Encrypt) de
+# ACME_EMAIL. Caddy pide y renueva el certificado solo: no hay certbot.
+#
+# La puerta del panel NO vive aquí, vive en nginx (auth_request, anti-CSRF,
+# rate-limit): así el despliegue con Docker reusa la misma configuración ya
+# auditada en lugar de reimplementarla.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	reverse_proxy nginx:80 {
+		# IP real del cliente: la necesita el rate-limit de nginx. Caddy la
+		# pone desde la conexión TCP, así que el cliente no puede falsearla.
+		header_up X-Forwarded-For {remote_host}
+	}
+}

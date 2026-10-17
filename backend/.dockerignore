@@ -1,0 +1,15 @@
+# Nunca hornear en la imagen datos locales del usuario.
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+run_local.ps1
+.session.enc
+.session.key
+.starlink_cookies.json
+*.db
+*.db-wal
+*.db-shm
+raw_sl.json
+.env

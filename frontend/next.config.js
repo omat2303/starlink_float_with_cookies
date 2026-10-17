@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Salida standalone: la que copia el Dockerfile, sin node_modules entero.
+  output: 'standalone',
   async rewrites() {
     return [
       {
