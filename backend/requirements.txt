@@ -5,7 +5,7 @@ pydantic>=2.0.0
 httpx>=0.27.0
 cryptography>=43.0.0
 # Servidor MCP opcional (mcp_server.py): solo lo necesita quien lo use.
-mcp>=1.9.4
+mcp>=2.3.0
 
 # Tests
 pytest>=8.0.0
