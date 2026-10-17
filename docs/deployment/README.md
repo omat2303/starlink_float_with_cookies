@@ -40,8 +40,9 @@ DNS: un registro `A` de `panel.ejemplo.org` apuntando a la IP del VPS.
 
 ```bash
 sudo mkdir -p /opt/starpanel
-sudo chown -R www-data:www-data /opt/starpanel
 # copiar el repo a /opt/starpanel  (git clone o scp)
+# el chown va DESPUÉS de copiar, si no los ficheros quedan de root y `npm ci` falla
+sudo chown -R www-data:www-data /opt/starpanel
 ```
 
 Backend:
@@ -100,18 +101,30 @@ systemctl status starpanel-backend starpanel-frontend --no-pager
 ## 5. nginx + TLS
 
 ```bash
-sudo cp docs/deployment/nginx-starpanel-limits.conf /etc/nginx/conf.d/starpanel-limits.conf
-sudo cp docs/deployment/nginx-starpanel.conf        /etc/nginx/sites-available/starpanel
-sudo ln -s /etc/nginx/sites-available/starpanel /etc/nginx/sites-enabled/starpanel
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-Certificado (primero crea el `server` de 80 y responde el challenge; puedes usar el
-`--nginx` de certbot sobre el dominio):
+El conf del repo ya trae el bloque 443 con `ssl_certificate`, así que **primero hay
+que emitir el certificado**: si copias el conf final antes, `nginx -t` falla porque
+el `.pem` todavía no existe. Orden correcto:
 
 ```bash
+# 5a) Arranque mínimo por HTTP, sólo para responder el challenge de Let's Encrypt
+sudo cp docs/deployment/nginx-starpanel-limits.conf /etc/nginx/conf.d/starpanel-limits.conf
+sudo tee /etc/nginx/sites-available/starpanel > /dev/null <<'EOF'
+server {
+    listen 80;
+    server_name panel.ejemplo.org;
+    location / { return 200 "ok"; }
+}
+EOF
+sudo ln -sf /etc/nginx/sites-available/starpanel /etc/nginx/sites-enabled/starpanel
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
+
+# 5b) Certificado (añade el bloque 443 y reescribe el 80 con el redirect)
 sudo certbot --nginx -d panel.ejemplo.org
+
+# 5c) Ahora sí, el conf definitivo del repo (ya encuentra los .pem)
+sudo cp docs/deployment/nginx-starpanel.conf /etc/nginx/sites-available/starpanel
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
 ## 6. Firewall y fail2ban
@@ -164,7 +177,7 @@ curl -s  -o /dev/null -w '%{http_code}\n' https://panel.ejemplo.org/api/v1/clien
 curl -s  -o /dev/null -w '%{http_code}\n' https://panel.ejemplo.org/api/auth/login -X POST  # 401
 
 # Tipos MIME y HSTS.
-curl -sI https://panel.ejemplo.org/login | findstr /i "strict-transport x-content-type x-frame"
+curl -sI https://panel.ejemplo.org/login | grep -Ei 'strict-transport|x-content-type|x-frame'
 
 # El backend no está expuesto:
 curl -s -o /dev/null -w '%{http_code}\n' http://<IP>:8000/api/v1/clientes   # timeout/refused

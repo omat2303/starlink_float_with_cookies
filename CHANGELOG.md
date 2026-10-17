@@ -5,6 +5,14 @@ y versionado [SemVer](https://semver.org/lang/es/).
 
 Todavía no hay una instancia desplegada: ver [docs/deployment](docs/deployment/README.md).
 
+## [Sin publicar]
+
+### Corregido
+
+- El runbook copiaba el conf final de nginx antes de emitir el certificado, y `nginx -t` fallaba porque `fullchain.pem` todavía no existía (callejón sin salida en el paso 5). Ahora primero se emite con un `server` mínimo por HTTP y después se instala el conf del repo.
+- El runbook hacía `chown` antes de copiar el repo: si clonabas como root, `npm ci` fallaba por permisos. El `chown` va después de copiar.
+- La verificación final usaba `findstr`, que es de Windows, en una guía para Ubuntu. Ahora usa `grep -Ei`.
+
 ## [0.1.0] - 2026-10-16
 
 Primera versión usable del panel.
