@@ -17,6 +17,9 @@ import time
 from fastapi import APIRouter, Cookie, HTTPException, Response
 from pydantic import BaseModel
 
+import session_store
+from auth_routes import parse_cookies
+
 router = APIRouter(prefix="/api/v1/panel", tags=["panel"])
 
 COOKIE_NAME = "sp_session"
@@ -134,3 +137,22 @@ def panel_verify(sp_session: str | None = Cookie(default=None)):
 @router.post("/logout", status_code=204)
 def panel_logout(response: Response):
     response.delete_cookie(COOKIE_NAME, path="/")
+
+
+class PanelCookie(BaseModel):
+    cookie: str
+
+
+@router.post("/cookie")
+def panel_save_cookie(body: PanelCookie):
+    """Guarda la cookie de Starlink pegada a mano en el panel (misma bóveda que la extensión).
+
+    Vive en el router del panel para quedar detrás de ``auth_request`` en nginx: la
+    ruta de la extensión (``/api/auth/login``) exige ``X-Ingest-Token``, y el
+    navegador no puede llevar ese token sin publicarlo.
+    """
+    cookies = parse_cookies(body.cookie)
+    if not cookies:
+        raise HTTPException(status_code=400, detail="Cookie vacía")
+    session_store.save(cookies)
+    return {"authenticated": True}

@@ -32,3 +32,17 @@ def test_login_sets_session_cookie(monkeypatch):
     assert r.status_code == 200
     assert r.cookies.get(panel_auth.COOKIE_NAME)
     assert client.get("/api/v1/panel/verify").status_code == 200
+
+
+def test_panel_saves_cookie_encrypted(tmp_path, monkeypatch):
+    """El cuadro del panel guarda la cookie por su propia puerta (sin ingest token)."""
+    monkeypatch.setattr("session_store.SESSION_FILE", tmp_path / "s.enc")
+    monkeypatch.setattr("session_store.KEY_FILE", tmp_path / "k.key")
+    client = TestClient(main.app)
+
+    r = client.post("/api/v1/panel/cookie", json={"cookie": "Starlink.Com.Sso=SECRETO; a=b"})
+    assert r.status_code == 200
+    assert r.json()["authenticated"] is True
+    assert b"SECRETO" not in (tmp_path / "s.enc").read_bytes()  # cifrado, no texto plano
+
+    assert client.post("/api/v1/panel/cookie", json={"cookie": "  "}).status_code == 400

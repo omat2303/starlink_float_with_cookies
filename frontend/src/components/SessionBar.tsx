@@ -27,7 +27,7 @@ export default function SessionBar() {
     setBusy(true);
     setMessage(null);
     try {
-      await api.login(cookie.trim());
+      await api.saveStarlinkCookie(cookie.trim());
       setCookie('');
       await refreshStatus();
       router.refresh();

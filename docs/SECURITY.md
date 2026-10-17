@@ -36,7 +36,7 @@ disco     ──[4]──> backend
 | Elevation: arrancar sin secretos | `APP_ENV=production` + `startup_check()` aborta el arranque |
 | DoS: fuerza bruta / scraping | `limit_req` (login 10 r/min) + fail2ban + pausa de 300 ms en login fallido |
 | CSRF | `SameSite=Lax` + cabecera `X-Requested-With: starpanel` en métodos de escritura (nginx) |
-| Fuga por cabeceras | HSTS, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` |
+| Fuga por cabeceras | HSTS, `Content-Security-Policy`, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` |
 
 ## Fuera de alcance (por ahora)
 
@@ -69,8 +69,12 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST https://panel.ejemplo.org/api/a
      -H 'Content-Type: application/json' -d '{"cookie":"a=b"}'                        # 401
 
 # 5. Cabeceras de seguridad presentes
-curl -sI https://panel.ejemplo.org/login | grep -Ei 'strict-transport|x-content-type|x-frame'
+curl -sI https://panel.ejemplo.org/login | grep -Ei 'strict-transport|content-security|x-content-type|x-frame'
 
 # 6. El backend no escucha fuera de localhost
 ss -ltnp | grep 8000      # debe mostrar 127.0.0.1:8000
+
+# 7. Guardar la cookie a mano exige sesión de panel (va detrás de auth_request)
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://panel.ejemplo.org/api/panel/cookie \
+     -H 'Content-Type: application/json' -d '{"cookie":"a=b"}'                        # 401
 ```

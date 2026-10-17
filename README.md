@@ -123,10 +123,12 @@ Detalle completo y diagramas: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Servidor MCP (opcional)
 
-`mcp_server.py` expone el panel como herramientas para agentes vía
-[MCP](https://modelcontextprotocol.io). El proyecto ya trae `.opencode/mcp.json`;
-con `opencode` abierto en la raíz, las herramientas aparecen como
-`starlink-fleet`.
+`mcp_server.py` expone el panel como herramientas **de sólo lectura** para
+agentes vía [MCP](https://modelcontextprotocol.io): resumen de flota, búsqueda de
+antenas por cliente y estado de sincronización. Corre por stdio (no abre ningún
+puerto) contra el backend en `127.0.0.1`. El proyecto ya trae
+`.opencode/mcp.json`; con `opencode` abierto en la raíz, las herramientas
+aparecen como `starlink-fleet`.
 
 ## Despliegue
 

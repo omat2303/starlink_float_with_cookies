@@ -128,8 +128,10 @@ export const api = {
     return data;
   },
 
-  login: async (cookie: string): Promise<{ authenticated: boolean }> => {
-    const { data } = await client.post<{ authenticated: boolean }>('/auth/login', { cookie });
+  // La cookie pegada a mano va por /panel/cookie (detrás de la sesión del panel);
+  // /auth/login es la puerta de la extensión y exige X-Ingest-Token.
+  saveStarlinkCookie: async (cookie: string): Promise<{ authenticated: boolean }> => {
+    const { data } = await client.post<{ authenticated: boolean }>('/panel/cookie', { cookie });
     return data;
   },
 

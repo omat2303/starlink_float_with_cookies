@@ -38,7 +38,7 @@ hacia el exterior. Ver [SECURITY.md](SECURITY.md).
 | Backend | `backend/` | API FastAPI + worker de sincronización |
 | Frontend | `frontend/` | UI Next.js (App Router) |
 | Extensión | `extension/` | lee las cookies de starlink.com y las sube al backend |
-| MCP | `mcp_server.py` | expone el panel como herramientas para OpenCode |
+| MCP | `mcp_server.py` | herramientas de sólo lectura (resumen, búsqueda, sync) para OpenCode, por stdio |
 | Despliegue | `deploy/`, `docs/deployment/` | unidades systemd, nginx, guía de VPS |
 
 ## Backend (`backend/`)
@@ -108,6 +108,9 @@ pisa. Las monedas distintas **nunca** se suman (cada saldo va con su moneda).
    30 días). nginx la valida con `auth_request` contra
    `GET /api/v1/panel/verify` en cada petición. El token es autocontenido
    (`sub:exp` firmado); `sub` es la costura por donde entrará el multi-tenant.
+   La cookie de Starlink pegada **a mano** en el panel entra por
+   `POST /api/v1/panel/cookie` (misma bóveda que la extensión, pero detrás de la
+   sesión de OG en vez del token de ingesta).
 2. **Extensión** — `auth_routes.py`. La cookie de Starlink se sube a
    `POST /api/v1/auth/login` con la cabecera `X-Ingest-Token`.
 
@@ -123,7 +126,7 @@ Todo bajo `/api/v1`:
 | POST | `/sync` | sincroniza ahora (409 si no hay sesión) |
 | PUT | `/gestiones` | crea/edita la gestión de un cliente |
 | PATCH | `/antennas/{kit}` | renombra una antena (`custom_name`) |
-| POST/GET/POST | `/panel/session` · `/panel/verify` · `/panel/logout` | login del panel |
+| POST/GET/POST/POST | `/panel/session` · `/panel/verify` · `/panel/logout` · `/panel/cookie` | login del panel y guardado manual de la cookie de Starlink |
 | POST/GET/POST | `/auth/login` · `/auth/status` · `/auth/logout` | ingesta y estado de la cookie de Starlink |
 
 ## Frontend (`frontend/`)
