@@ -7,6 +7,10 @@ Todavía no hay una instancia desplegada: ver [docs/deployment](docs/deployment/
 
 ## [Sin publicar]
 
+### Cambiado
+
+- El CI del backend ahora prueba Python 3.10 y 3.12: el runbook asume Ubuntu 22.04, que trae 3.10, y antes sólo se validaba 3.12.
+
 ### Corregido
 
 - El runbook copiaba el conf final de nginx antes de emitir el certificado, y `nginx -t` fallaba porque `fullchain.pem` todavía no existía (callejón sin salida en el paso 5). Ahora primero se emite con un `server` mínimo por HTTP y después se instala el conf del repo.
