@@ -165,3 +165,11 @@ tu propio negocio. La única condición: si lo modificas y lo ofreces como
 servicio a terceros (por ejemplo, tu propia versión del panel en la web), tienes
 que publicar tu código fuente bajo esta misma licencia. Eso evita que alguien lo
 cierre y lo revenda.
+
+## Despliegue en producci�n
+
+Tienes dos caminos documentados en [docs/deployment/README.md](docs/deployment/README.md):
+
+- **[Docker](docs/deployment/docker.md):** ideal para VPS, con HTTPS autom�tico (Caddy) y compatible con Portainer. Es el camino recomendado para que *cualquiera* lo levante sin pelearse con certificados.
+- **[Sistema nativo (systemd)](docs/deployment/README.md):** funciona con nginx en el host y certbot (Let's Encrypt).
+

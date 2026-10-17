@@ -11,6 +11,10 @@ Todavía no hay una instancia desplegada: ver [docs/deployment](docs/deployment/
 
 - El CI del backend ahora prueba Python 3.10 y 3.12: el runbook asume Ubuntu 22.04, que trae 3.10, y antes sólo se validaba 3.12.
 
+### Añadido
+
+- Despliegue Docker/Portainer: compose con Caddy (HTTPS automático) y nginx como puerta ya auditada; volumen para los datos; variables configurables con `SESSION_DIR`; documentación en [docs/deployment/docker.md](docs/deployment/docker.md).
+
 ### Corregido
 
 - El runbook copiaba el conf final de nginx antes de emitir el certificado, y `nginx -t` fallaba porque `fullchain.pem` todavía no existía (callejón sin salida en el paso 5). Ahora primero se emite con un `server` mínimo por HTTP y después se instala el conf del repo.
