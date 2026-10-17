@@ -100,7 +100,6 @@ systemctl status starpanel-backend starpanel-frontend --no-pager
 
 ## 5. nginx + TLS
 
-```bash
 El conf del repo ya trae el bloque 443 con `ssl_certificate`, así que **primero hay
 que emitir el certificado**: si copias el conf final antes, `nginx -t` falla porque
 el `.pem` todavía no existe. Orden correcto:
