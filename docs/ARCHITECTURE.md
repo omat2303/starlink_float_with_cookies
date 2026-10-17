@@ -131,7 +131,7 @@ Todo bajo `/api/v1`:
 
 ## Frontend (`frontend/`)
 
-Next.js 14 (App Router). `next.config.js` reescribe `/api/*` a
+Next.js 16 (App Router). `next.config.js` reescribe `/api/*` a
 `http://localhost:8000/api/v1/*`, así el navegador nunca habla directo con el
 backend.
 

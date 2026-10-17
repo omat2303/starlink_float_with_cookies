@@ -111,6 +111,9 @@ Desde la raíz del proyecto:
 .\backend\venv\Scripts\python.exe -m pytest -q
 ```
 
+Los mismos tests corren en GitHub Actions junto con los tipos, el build y la
+auditoría de dependencias del frontend (`.github/workflows/ci.yml`).
+
 ## Modelo de datos
 
 - `Account` — una cuenta del portal: `client_name` (agrupador), moneda, saldo, vencimiento.
@@ -146,6 +149,10 @@ servicio de Starlink.
 - Login multi-tenant por invitación (fase 2).
 - Alertas por WhatsApp.
 - Conversión de monedas: cada saldo va con su moneda, nunca se suma un total.
+
+## Historial de cambios
+
+Ver [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Licencia
 
