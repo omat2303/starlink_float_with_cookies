@@ -65,7 +65,7 @@ Plantillas listas para copiar en `deploy/*.env.example`.
 
 ### Extensión de Chrome (una sola vez)
 
-**Descarga:** [`docs/downloads/starpanel-extension-v1.1.1.zip`](docs/downloads/starpanel-extension-v1.1.1.zip)
+**Descarga:** [`docs/downloads/starpanel-extension-v1.1.2.zip`](docs/downloads/starpanel-extension-v1.1.2.zip)
 (botón *Download raw* en GitHub, 3 KB; no hace falta clonar el repo). Si
 prefieres la fuente, está la carpeta `extension/` en el propio repo.
 

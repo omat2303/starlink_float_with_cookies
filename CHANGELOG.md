@@ -17,11 +17,12 @@ Todavía no hay una instancia desplegada: ver [docs/deployment](docs/deployment/
 ### Añadido
 
 - Despliegue Docker/Portainer: compose con Caddy (HTTPS automático) y nginx como puerta ya auditada; volumen para los datos; variables configurables con `SESSION_DIR`; documentación en [docs/deployment/docker.md](docs/deployment/docker.md).
-- **Descarga de la extensión** empaquetada en el repo: [`docs/downloads/starpanel-extension-v1.1.1.zip`](docs/downloads/starpanel-extension-v1.1.1.zip) (carpeta `extension/` dentro, lista para *Cargar descomprimida*). Enlazada desde el README, desde [docker.md](docs/deployment/docker.md) y desde el runbook nativo, para instalarla sin clonar el repo entero. El zip se regenera con `Compress-Archive -Path extension -DestinationPath docs/downloads/starpanel-extension-v1.1.1.zip` cada vez que cambie la extensión.
+- **Descarga de la extensión** empaquetada en el repo: [`docs/downloads/starpanel-extension-v1.1.2.zip`](docs/downloads/starpanel-extension-v1.1.2.zip) (carpeta `extension/` dentro, lista para *Cargar descomprimida*). Enlazada desde el README, desde [docker.md](docs/deployment/docker.md) y desde el runbook nativo, para instalarla sin clonar el repo entero. El zip se regenera con `Compress-Archive -Path extension -DestinationPath docs/downloads/starpanel-extension-v1.1.2.zip` cada vez que cambie la extensión.
 
 ### Corregido
 
 - La extensión de Chrome mandaba la cookie a `https://panel.ejemplo.org` (el dominio de ejemplo del repo) y no declaraba permiso para el backend local, así que la cookie nunca llegaba al panel en `localhost`. Ahora apunta a `http://localhost:8000/api/v1/auth/login`, declara ese host, y su botón aparece también en el panel (`localhost:3000`). `StarPanel.bat` carga `backend/.env` (`--env-file`) para que el `INGEST_TOKEN` sea determinista y coincida con el que se pega en las opciones.
+- La extensión fallaba sin decir por qué: si la petición no llegaba (backend caído, permiso ausente) la promesa se rompía en silencio, y el badge rojo `!` no daba el motivo. Ahora todo error se reporta, el tooltip del icono dice la causa, y un `HTTP 401` avisa explícitamente que hay que revisar el token de ingesta en las Opciones.
 - La última sección del README tenía dos caracteres rotos (`producci?n`, `autom?tico`): se había escrito con una redirección de PowerShell que pierde la codificación. Todo el README vuelve a estar en UTF-8 válido.
 
 - El runbook copiaba el conf final de nginx antes de emitir el certificado, y `nginx -t` fallaba porque `fullchain.pem` todavía no existía (callejón sin salida en el paso 5). Ahora primero se emite con un `server` mínimo por HTTP y después se instala el conf del repo.
