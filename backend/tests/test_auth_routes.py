@@ -29,3 +29,13 @@ def test_logout_clears(client, tmp_path, monkeypatch):
     client.post("/api/v1/auth/login", json={"cookie": "a=b"})
     client.post("/api/v1/auth/logout")
     assert client.get("/api/v1/auth/status").json()["authenticated"] is False
+
+
+def test_login_rejects_empty_values_without_clobbering(client, tmp_path, monkeypatch):
+    """Un 'x=' de prueba no debe pisar la sesión real guardada."""
+    monkeypatch.setattr("session_store.SESSION_FILE", tmp_path / "s.enc")
+    monkeypatch.setattr("session_store.KEY_FILE", tmp_path / "k.key")
+    client.post("/api/v1/auth/login", json={"cookie": f"Starlink.Com.Sso={SECRET}"})
+    r = client.post("/api/v1/auth/login", json={"cookie": "x="})
+    assert r.status_code == 400
+    assert client.get("/api/v1/auth/status").json()["authenticated"] is True

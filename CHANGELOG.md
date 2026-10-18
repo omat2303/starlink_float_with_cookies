@@ -17,7 +17,13 @@ Todavía no hay una instancia desplegada: ver [docs/deployment](docs/deployment/
 ### Añadido
 
 - Despliegue Docker/Portainer: compose con Caddy (HTTPS automático) y nginx como puerta ya auditada; volumen para los datos; variables configurables con `SESSION_DIR`; documentación en [docs/deployment/docker.md](docs/deployment/docker.md).
-- **Descarga de la extensión** empaquetada en el repo: [`docs/downloads/starpanel-extension-v1.1.2.zip`](docs/downloads/starpanel-extension-v1.1.2.zip) (carpeta `extension/` dentro, lista para *Cargar descomprimida*). Enlazada desde el README, desde [docker.md](docs/deployment/docker.md) y desde el runbook nativo, para instalarla sin clonar el repo entero. El zip se regenera con `Compress-Archive -Path extension -DestinationPath docs/downloads/starpanel-extension-v1.1.2.zip` cada vez que cambie la extensión.
+- **Descarga de la extensión** empaquetada en el repo: [`docs/downloads/starpanel-extension-v1.1.3.zip`](docs/downloads/starpanel-extension-v1.1.3.zip) (carpeta `extension/` dentro, lista para *Cargar descomprimida*). Enlazada desde el README, desde [docker.md](docs/deployment/docker.md) y desde el runbook nativo, para instalarla sin clonar el repo entero. El zip se regenera con `Compress-Archive -Path extension/* -DestinationPath docs/downloads/starpanel-extension-v1.1.3.zip` cada vez que cambie la extensión.
+- Si la extensión no tiene token guardado ya no manda una petición inútil que acaba en 401: el icono avisa directamente *Falta el token de ingesta: abre las Opciones de la extensión y pégalo*.
+- `POST /api/v1/auth/login` rechaza cookies cuyo valor esté vacío (p. ej. un `x=` de prueba): antes ese dict casi vacío pisaba la sesión real guardada y el panel se quedaba con datos viejos hasta volver a enviar la cookie.
+
+### Cambiado
+
+- La extensión deduplica las cookies por nombre y se queda con la más reciente, y sólo con las de `starlink.com` (no de subdominios). `parse_cookies` del backend es *last-wins*: una cookie huérfana de una sesión anterior podía tapar la recién iniciada, que era la causa de "toma una cookie vieja y no la nueva sesión". Versión de la extensión: 1.1.3.
 
 ### Corregido
 

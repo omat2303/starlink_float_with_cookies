@@ -163,7 +163,7 @@ sudo systemctl restart fail2ban
 ## 7. Extensión de Chrome
 
 Si prefieres no copiar la fuente del repo, descarga el zip ya empaquetado:
-[`docs/downloads/starpanel-extension-v1.1.2.zip`](../downloads/starpanel-extension-v1.1.2.zip)
+[`docs/downloads/starpanel-extension-v1.1.3.zip`](../downloads/starpanel-extension-v1.1.3.zip)
 (botón *Download raw* en GitHub).
 
 1. Carga `extension/` como extensión sin empaquetar (`chrome://extensions` → modo desarrollador).

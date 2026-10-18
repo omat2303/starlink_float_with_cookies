@@ -41,7 +41,7 @@ La extensión es la única vía **automática** para traer la cookie de Starlink
 (Chrome 136+ cifra las cookies en disco, así que leer el fichero `Cookies` no
 sirve):
 
-1. Descarga [`docs/downloads/starpanel-extension-v1.1.2.zip`](../downloads/starpanel-extension-v1.1.2.zip)
+1. Descarga [`docs/downloads/starpanel-extension-v1.1.3.zip`](../downloads/starpanel-extension-v1.1.3.zip)
    y descomprime (botón *Download raw* de GitHub; no hace falta clonar el repo).
 2. Pon tu dominio (el de `DOMAIN`) en `extension/manifest.json` y
    `extension/background.js`: el zip trae `panel.ejemplo.org` de ejemplo.

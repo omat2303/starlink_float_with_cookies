@@ -13,9 +13,30 @@ async function ingestToken() {
   return ingestToken || '';
 }
 
+// getAll({domain}) devuelve también cookies de subdominios y de rutas viejas.
+// Si dos cookies se llaman igual, el backend se queda con la última que llegue
+// (parse_cookies es last-wins), así que una cookie huérfana de una sesión
+// anterior podía tapar la nueva. Nos quedamos con la más reciente.
+function newestByName(cookies) {
+  const byName = new Map();
+  for (const c of cookies) {
+    if (c.domain !== 'starlink.com' && c.domain !== '.starlink.com') continue;
+    const prev = byName.get(c.name);
+    const ts = c.lastAccessed || c.creation || 0;
+    if (!prev || ts > (prev.lastAccessed || prev.creation || 0)) byName.set(c.name, c);
+  }
+  return [...byName.values()];
+}
+
 async function sendCookies() {
   try {
-    const cookies = await chrome.cookies.getAll({ domain: 'starlink.com' });
+    const token = await ingestToken();
+    if (!token) {
+      // Sin token el backend responde 401 igual, pero avisar antes ahorra un
+      // envío inútil y dice exactamente qué hacer.
+      return { ok: false, error: 'Falta el token de ingesta: abre las Opciones de la extensión y pégalo' };
+    }
+    const cookies = newestByName(await chrome.cookies.getAll({ domain: 'starlink.com' }));
     if (!cookies.length) {
       return { ok: false, error: 'No hay cookies de starlink.com en este perfil (inicia sesión en starlink.com)' };
     }
@@ -23,7 +44,7 @@ async function sendCookies() {
     const header = cookies.map((c) => `${c.name}=${c.value}`).join('; ');
     const res = await fetch(LOGIN, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Ingest-Token': await ingestToken() },
+      headers: { 'Content-Type': 'application/json', 'X-Ingest-Token': token },
       body: JSON.stringify({ cookie: header }),
     });
     if (res.ok) return { ok: true, count: cookies.length };

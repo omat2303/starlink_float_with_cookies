@@ -41,6 +41,10 @@ async def login(body: CookieLoginRequest, _: None = Depends(require_ingest_token
     cookies = parse_cookies(body.cookie)
     if not cookies:
         raise HTTPException(status_code=400, detail="Cookie vacía")
+    if not any(cookies.values()):
+        # Un solo "x=" de prueba llega como dict no vacío y pisaría la sesión
+        # real guardada. Ninguna cookie real de Starlink viene sin valor.
+        raise HTTPException(status_code=400, detail="Cookies sin valor: ¿copiaste bien la cookie de starlink.com?")
     session_store.save(cookies)
     return {"authenticated": True}
 
