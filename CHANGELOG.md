@@ -10,12 +10,18 @@ Todavía no hay una instancia desplegada: ver [docs/deployment](docs/deployment/
 ### Cambiado
 
 - El CI del backend ahora prueba Python 3.10 y 3.12: el runbook asume Ubuntu 22.04, que trae 3.10, y antes sólo se validaba 3.12.
+- El README tenía **dos** secciones de despliegue (una vieja que sólo apuntaba al runbook nativo y otra nueva al final). Ahora hay una sola, con Docker primero como camino recomendado.
+- Las opciones de la extensión ya no mencionan a un operador concreto: explican que el `INGEST_TOKEN` está en el `.env` del panel o que hay que pedírselo a quien lo desplegó. El repo es público y cualquiera puede montar su propia instancia.
+- Tildes en los nombres visibles del CI (`Frontend (tipos, build, auditoría)`, `Auditoría de dependencias de producción`), que se leen en la pestaña Actions de GitHub.
 
 ### Añadido
 
 - Despliegue Docker/Portainer: compose con Caddy (HTTPS automático) y nginx como puerta ya auditada; volumen para los datos; variables configurables con `SESSION_DIR`; documentación en [docs/deployment/docker.md](docs/deployment/docker.md).
+- **Descarga de la extensión** empaquetada en el repo: [`docs/downloads/starpanel-extension-v1.1.0.zip`](docs/downloads/starpanel-extension-v1.1.0.zip) (carpeta `extension/` dentro, lista para *Cargar descomprimida*). Enlazada desde el README, desde [docker.md](docs/deployment/docker.md) y desde el runbook nativo, para instalarla sin clonar el repo entero. El zip se regenera con `Compress-Archive -Path extension -DestinationPath docs/downloads/starpanel-extension-v1.1.0.zip` cada vez que cambie la extensión.
 
 ### Corregido
+
+- La última sección del README tenía dos caracteres rotos (`producci?n`, `autom?tico`): se había escrito con una redirección de PowerShell que pierde la codificación. Todo el README vuelve a estar en UTF-8 válido.
 
 - El runbook copiaba el conf final de nginx antes de emitir el certificado, y `nginx -t` fallaba porque `fullchain.pem` todavía no existía (callejón sin salida en el paso 5). Ahora primero se emite con un `server` mínimo por HTTP y después se instala el conf del repo.
 - El runbook hacía `chown` antes de copiar el repo: si clonabas como root, `npm ci` fallaba por permisos. El `chown` va después de copiar.

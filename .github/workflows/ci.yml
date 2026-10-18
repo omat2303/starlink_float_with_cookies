@@ -38,7 +38,7 @@ jobs:
         run: python -m pytest -q
 
   frontend:
-    name: Frontend (tipos, build, auditoria)
+    name: Frontend (tipos, build, auditoría)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -56,7 +56,7 @@ jobs:
         run: npx tsc --noEmit
       - name: Build
         run: npm run build
-      - name: Auditoria de dependencias de produccion
+      - name: Auditoría de dependencias de producción
         run: npm audit --omit=dev --audit-level=high
 
   docker:

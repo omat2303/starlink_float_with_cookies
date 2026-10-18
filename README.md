@@ -65,11 +65,16 @@ Plantillas listas para copiar en `deploy/*.env.example`.
 
 ### Extensión de Chrome (una sola vez)
 
+**Descarga:** [`docs/downloads/starpanel-extension-v1.1.0.zip`](docs/downloads/starpanel-extension-v1.1.0.zip)
+(botón *Download raw* en GitHub, 3 KB; no hace falta clonar el repo). Si
+prefieres la fuente, está la carpeta `extension/` en el propio repo.
+
 Antes de cargarla, pon tu dominio (el del panel) en `extension/manifest.json` y
 `extension/background.js`: el repo trae `panel.ejemplo.org` de ejemplo.
 
 `chrome://extensions` → activa **Modo de desarrollador** → **Cargar descomprimida**
-→ elige la carpeta `extension/` → abre sus opciones y pega el `INGEST_TOKEN`.
+→ descomprime el zip y elige la carpeta `extension/` → abre sus opciones y pega
+el `INGEST_TOKEN` (en Docker sale del `.env`).
 
 Sin extensión también se puede pegar la cookie a mano en el cuadro del panel
 (DevTools → Application → Cookies, los pares `nombre=valor` unidos por `;`).
@@ -81,7 +86,8 @@ app-bound encryption, así que leer el archivo `Cookies` del disco no funciona.
 La cookie de sesión **es la llave de todas las cuentas del lote**: quien la tenga
 entra en todas. Por eso el panel tiene una puerta con contraseña (nginx +
 `auth_request`), la cookie se guarda **cifrada** en `backend/.session.enc` (la
-llave va en `backend/.session.key`) y ambos están fuera de git.
+llave va en `backend/.session.key`) y ambos están fuera de git; en Docker viven
+en el volumen `starpanel_data`.
 
 Si la cookie llegó a salir de la máquina (chat, correo, captura), rótala: cierra
 sesión en starlink.com, cambia la contraseña y vuelve a traer la cookie.
@@ -135,8 +141,14 @@ aparecen como `starlink-fleet`.
 
 ## Despliegue
 
-Todavía **no hay instancia pública**. Guía completa para VPS (nginx, TLS,
-systemd, fail2ban): [`docs/deployment/README.md`](docs/deployment/README.md).
+Todavía **no hay instancia pública**. Dos caminos documentados:
+
+- **[Docker](docs/deployment/docker.md) (recomendado):** `docker compose up -d`
+  con HTTPS automático (Caddy + Let's Encrypt) y perfil opcional de Portainer.
+  Es el camino más corto para que *cualquiera* lo levante en un VPS sin
+  pelearse con certificados.
+- **[Sistema nativo (systemd)](docs/deployment/README.md):** nginx en el host,
+  certbot (Let's Encrypt), fail2ban y el runbook completo paso a paso.
 
 ## Aviso
 
@@ -165,11 +177,3 @@ tu propio negocio. La única condición: si lo modificas y lo ofreces como
 servicio a terceros (por ejemplo, tu propia versión del panel en la web), tienes
 que publicar tu código fuente bajo esta misma licencia. Eso evita que alguien lo
 cierre y lo revenda.
-
-## Despliegue en producci�n
-
-Tienes dos caminos documentados en [docs/deployment/README.md](docs/deployment/README.md):
-
-- **[Docker](docs/deployment/docker.md):** ideal para VPS, con HTTPS autom�tico (Caddy) y compatible con Portainer. Es el camino recomendado para que *cualquiera* lo levante sin pelearse con certificados.
-- **[Sistema nativo (systemd)](docs/deployment/README.md):** funciona con nginx en el host y certbot (Let's Encrypt).
-

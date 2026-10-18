@@ -162,9 +162,15 @@ sudo systemctl restart fail2ban
 
 ## 7. Extensión de Chrome
 
+Si prefieres no copiar la fuente del repo, descarga el zip ya empaquetado:
+[`docs/downloads/starpanel-extension-v1.1.0.zip`](../downloads/starpanel-extension-v1.1.0.zip)
+(botón *Download raw* en GitHub).
+
 1. Carga `extension/` como extensión sin empaquetar (`chrome://extensions` → modo desarrollador).
-2. Abre las opciones de la extensión y pega el `INGEST_TOKEN` del `.env`.
-3. En el panel (`https://panel.ejemplo.org`), pulsa **Traer cookie y sincronizar**
+2. Pon tu dominio en `extension/manifest.json` y `extension/background.js`
+   (el repo trae `panel.ejemplo.org` de ejemplo).
+3. Abre las opciones de la extensión y pega el `INGEST_TOKEN` del `.env`.
+4. En el panel (`https://panel.ejemplo.org`), pulsa **Traer cookie y sincronizar**
    con la sesión de starlink.com abierta en el mismo perfil de Chrome.
 
 ## 8. Verificación

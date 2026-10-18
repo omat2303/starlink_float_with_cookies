@@ -35,6 +35,22 @@ docker compose ps --format "{{.Service}} {{.Ports}}"
 
 **Importante:** `backend` y `frontend` **no deben** tener puertos publicados. El hecho de que solo `caddy` exponga 80/443 es lo que impide saltarse la puerta de nginx.
 
+### Extensión de Chrome (una sola vez)
+
+La extensión es la única vía **automática** para traer la cookie de Starlink
+(Chrome 136+ cifra las cookies en disco, así que leer el fichero `Cookies` no
+sirve):
+
+1. Descarga [`docs/downloads/starpanel-extension-v1.1.0.zip`](../downloads/starpanel-extension-v1.1.0.zip)
+   y descomprime (botón *Download raw* de GitHub; no hace falta clonar el repo).
+2. Pon tu dominio (el de `DOMAIN`) en `extension/manifest.json` y
+   `extension/background.js`: el zip trae `panel.ejemplo.org` de ejemplo.
+3. `chrome://extensions` → **Modo de desarrollador** → **Cargar descomprimida**
+   → elige la carpeta `extension/`.
+4. Abre sus opciones y pega el `INGEST_TOKEN` del `.env`.
+5. Con starlink.com abierto en ese mismo Chrome, pulsa **Traer cookie y
+   sincronizar** en el panel.
+
 ## 3) Portainer
 
 Portainer sirve para gestionar Docker desde web. El compose incluye un perfil `portainer` (apagado por defecto). Para usarlo:
