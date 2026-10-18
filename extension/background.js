@@ -6,7 +6,7 @@
 // El backend exige el token de ingesta (X-Ingest-Token), que se pega una vez en
 // la página de opciones de la extensión.
 // Pon aquí el dominio donde vive tu panel (el repo trae uno de ejemplo).
-const LOGIN = 'https://panel.ejemplo.org/api/auth/login';
+const LOGIN = 'http://localhost:8000/api/v1/auth/login';
 
 async function ingestToken() {
   const { ingestToken } = await chrome.storage.local.get('ingestToken');
