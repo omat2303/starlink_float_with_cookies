@@ -81,6 +81,26 @@ Sin extensión también se puede pegar la cookie a mano en el cuadro del panel
 La extensión es la única vía automática: Chrome 136+ cifra las cookies con
 app-bound encryption, así que leer el archivo `Cookies` del disco no funciona.
 
+### Si no sincroniza
+
+El icono de la extensión avisa del resultado: badge verde **OK** = cookie
+enviada; badge rojo **!** = falló, y el motivo está al pasar el mouse sobre el
+icono. Causas y solución:
+
+| Motivo en el tooltip | Qué hacer |
+| --- | --- |
+| `Falta el token de ingesta...` | Abrí las Opciones de la extensión y pegá el `INGEST_TOKEN` del `.env` del panel. |
+| `HTTP 401: el token de ingesta no coincide...` | El token pegado no es el del backend en uso. Copialo de nuevo del `.env` (`INGEST_TOKEN`). |
+| `HTTP 400 ... Cookies sin valor` | Lo que se copió no era la cookie real de starlink.com. Volvé a traerla con la extensión estando logueado en starlink.com. |
+| `No se pudo conectar con http://localhost:8000...` | El backend no está corriendo (o el dominio del panel en el `manifest.json` no coincide con donde lo abriste). |
+| `No hay cookies de starlink.com...` | Iniciá sesión en starlink.com en **ese mismo perfil** de Chrome y volvé a hacer clic en el icono. |
+
+Si el badge dice OK pero el panel muestra datos viejos: abrí el panel y usá el
+botón flotante *Traer cookie y sincronizar* (el sync tarda minutos y recorre
+cuentas una por una); el worker además resincroniza solo cada 2 horas. Tras
+**actualizar la extensión** hay que recargarla en `chrome://extensions` (ícono
+🔄) para que corra el código nuevo.
+
 ## Seguridad
 
 La cookie de sesión **es la llave de todas las cuentas del lote**: quien la tenga
