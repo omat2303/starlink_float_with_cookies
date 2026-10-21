@@ -7,7 +7,7 @@ cryptography>=43.0.0
 # Servidor MCP opcional (mcp_server.py): solo lo necesita quien lo use.
 # <2 a proposito: mcp 2.x elimino FastMCP (ahora es MCPServer) y mcp_server.py
 # usa la API v1. Antes de subir de major hay que portar el servidor.
-mcp>=1.9.4,<2
+mcp>=1.30.0,<2
 
 # Tests
 pytest>=8.0.0
