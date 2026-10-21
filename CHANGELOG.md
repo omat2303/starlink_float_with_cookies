@@ -13,6 +13,7 @@ Todavía no hay una instancia desplegada: ver [docs/deployment](docs/deployment/
 - El README tenía **dos** secciones de despliegue (una vieja que sólo apuntaba al runbook nativo y otra nueva al final). Ahora hay una sola, con Docker primero como camino recomendado.
 - Las opciones de la extensión ya no mencionan a un operador concreto: explican que el `INGEST_TOKEN` está en el `.env` del panel o que hay que pedírselo a quien lo desplegó. El repo es público y cualquiera puede montar su propia instancia.
 - Tildes en los nombres visibles del CI (`Frontend (tipos, build, auditoría)`, `Auditoría de dependencias de producción`), que se leen en la pestaña Actions de GitHub.
+- La extensión deduplica las cookies por nombre y se queda con la más reciente, y sólo con las de `starlink.com` (no de subdominios). `parse_cookies` del backend es *last-wins*: una cookie huérfana de una sesión anterior podía tapar la recién iniciada, que era la causa de "toma una cookie vieja y no la nueva sesión". Versión de la extensión: 1.1.3.
 
 ### Añadido
 
@@ -20,10 +21,6 @@ Todavía no hay una instancia desplegada: ver [docs/deployment](docs/deployment/
 - **Descarga de la extensión** empaquetada en el repo: [`docs/downloads/starpanel-extension-v1.1.3.zip`](docs/downloads/starpanel-extension-v1.1.3.zip) (carpeta `extension/` dentro, lista para *Cargar descomprimida*). Enlazada desde el README, desde [docker.md](docs/deployment/docker.md) y desde el runbook nativo, para instalarla sin clonar el repo entero. El zip se regenera con `Compress-Archive -Path extension/* -DestinationPath docs/downloads/starpanel-extension-v1.1.3.zip` cada vez que cambie la extensión.
 - Si la extensión no tiene token guardado ya no manda una petición inútil que acaba en 401: el icono avisa directamente *Falta el token de ingesta: abre las Opciones de la extensión y pégalo*.
 - `POST /api/v1/auth/login` rechaza cookies cuyo valor esté vacío (p. ej. un `x=` de prueba): antes ese dict casi vacío pisaba la sesión real guardada y el panel se quedaba con datos viejos hasta volver a enviar la cookie.
-
-### Cambiado
-
-- La extensión deduplica las cookies por nombre y se queda con la más reciente, y sólo con las de `starlink.com` (no de subdominios). `parse_cookies` del backend es *last-wins*: una cookie huérfana de una sesión anterior podía tapar la recién iniciada, que era la causa de "toma una cookie vieja y no la nueva sesión". Versión de la extensión: 1.1.3.
 
 ### Corregido
 
