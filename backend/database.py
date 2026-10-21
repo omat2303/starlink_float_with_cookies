@@ -47,6 +47,9 @@ def ensure_schema() -> None:
     from sqlalchemy import inspect, text
 
     wanted = {
+        "accounts": {
+            "hidden_at": "DATETIME",
+        },
         "antennas": {
             "custom_name": "VARCHAR(200)",
             "activation_date": "DATETIME",

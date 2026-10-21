@@ -230,7 +230,12 @@ def list_clients(db: Session = Depends(get_db)):
     """Todas las cuentas agrupadas por cliente (monedas por separado, sin total)."""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     groups: dict[str, list[Account]] = {}
-    for account in db.query(Account).order_by(Account.account_number).all():
+    for account in (
+        db.query(Account)
+        .filter(Account.hidden_at.is_(None))
+        .order_by(Account.account_number)
+        .all()
+    ):
         groups.setdefault(account.client_name, []).append(account)
 
     gestiones = {g.client_name: g for g in db.query(Gestion).all()}
@@ -254,7 +259,7 @@ def summary(db: Session = Depends(get_db)):
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     in_a_week = now + timedelta(days=7)
     in_72h = now + timedelta(hours=72)
-    accounts = db.query(Account).all()
+    accounts = db.query(Account).filter(Account.hidden_at.is_(None)).all()
     por_vencer_72h = 0
     for a in accounts:
         if a.next_due_date is not None:
@@ -264,7 +269,7 @@ def summary(db: Session = Depends(get_db)):
     return SummaryOut(
         clientes=len({a.client_name for a in accounts}),
         cuentas=len(accounts),
-        antenas=db.query(Antenna).count(),
+        antenas=db.query(Antenna).join(Account).filter(Account.hidden_at.is_(None)).count(),
         suspendidas=sum(1 for a in accounts if a.is_billing_suspended),
         por_vencer=sum(
             1
@@ -338,6 +343,17 @@ def sync_status(db: Session = Depends(get_db)):
     )
 
 
+def _reconcile_accounts(db: Session, live: set[str]) -> None:
+    """Oculta lo que el portal ya no devuelve y vuelve a mostrar lo que reaparece."""
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    for account in db.query(Account).all():
+        if account.account_number in live:
+            account.hidden_at = None
+        elif account.hidden_at is None:
+            account.hidden_at = now
+    db.commit()
+
+
 # Dos syncs a la vez chocan en SQLite ("database is locked"): el reintento del
 # panel mientras el anterior seguía corriendo devolvía 500.
 # shortcut: sólo cubre POST /sync; el loop de worker.py (cada 2 h) no lo consulta.
@@ -362,6 +378,15 @@ async def trigger_sync(db: Session = Depends(get_db)):
     _sync_running = True
     try:
         stats = await sync_once(client, db)
+        # `sync_once` sólo hace upsert: lo borrado en el portal quedaba para siempre.
+        # Se compara contra la lista del portal y se oculta (nunca se borra).
+        try:
+            live = {a["account_number"] for a in await client.accounts()}
+            if len(live) >= stats["accounts"]:  # <: lista incompleta, no ocultar nada
+                _reconcile_accounts(db, live)
+        except Exception as exc:  # noqa: BLE001 - reconciliar no debe tirar el sync
+            db.rollback()  # deja la sesión usable si falló el commit
+            logger.warning("no se pudo reconciliar cuentas: %s", exc)
     except SessionExpired as exc:
         # Cookie guardada pero vencida: que el panel pida pegar una nueva, no un 500.
         raise HTTPException(

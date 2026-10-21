@@ -106,6 +106,10 @@ reintentá. Un sync completo tarda entre 20 y 90 segundos según cuántas cuenta
 tenga la sesión; *Última sincronización* se muestra en tu hora local (el backend
 la guarda en UTC).
 
+Si borraste una cuenta en Starlink y sigue en el panel: el sync automático de
+cada 2 h sólo actualiza, no quita. Pulsá **Sincronizar ahora** una vez; la cuenta
+se oculta (no se borra: si el portal la vuelve a devolver, reaparece).
+
 Tras **actualizar la extensión** hay que recargarla en `chrome://extensions` (ícono
 🔄) para que corra el código nuevo.
 

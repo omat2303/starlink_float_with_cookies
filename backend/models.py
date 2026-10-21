@@ -25,6 +25,9 @@ class Account(Base):
     status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
     balance_due: Mapped[float | None] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # Cuenta que el portal ya no devuelve (borrada o sin acceso): se oculta, no se
+    # borra, para no perder nombres propios ni historial si reaparece.
+    hidden_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     antennas: Mapped[list["Antenna"]] = relationship(
         back_populates="account", cascade="all, delete-orphan"

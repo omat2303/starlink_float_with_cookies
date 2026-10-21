@@ -134,6 +134,50 @@ def test_sync_status_last_sync_sale_en_utc(seeded_client):
     assert last_sync.endswith(("Z", "+00:00"))
 
 
+_LIVE: list[str] = []
+
+
+class _FakePortal:
+    """Portal mínimo: sólo la lista de cuentas que devuelve la sesión."""
+
+    def __init__(self, cookies):
+        pass
+
+    async def accounts(self):
+        return [{"account_number": n} for n in _LIVE]
+
+    async def aclose(self):
+        pass
+
+
+async def _sync_ok(*args, **kwargs):
+    return {"accounts": len(_LIVE), "antennas": 0, "errors": 0}
+
+
+def test_cuentas_que_ya_no_estan_en_el_portal_no_se_muestran(seeded_client, monkeypatch):
+    """El sync sólo hacía upsert: lo borrado en Starlink seguía apareciendo."""
+    monkeypatch.setattr("main.session_store.load", lambda *a, **k: {"a": "b"})
+    monkeypatch.setattr("main.PortalClient", _FakePortal)
+    monkeypatch.setattr("main.sync_once", _sync_ok)
+
+    _LIVE[:] = ["ACC-USD"]
+    assert seeded_client.post("/api/v1/sync").status_code == 200
+    body = seeded_client.get("/api/v1/clientes").json()
+    assert [a["account_number"] for c in body for a in c["accounts"]] == ["ACC-USD"]
+    resumen = seeded_client.get("/api/v1/resumen").json()
+    assert resumen["cuentas"] == 1
+    assert resumen["antenas"] == 1  # la antena de la cuenta oculta no cuenta
+
+    # Si el portal la vuelve a devolver, se muestra otra vez.
+    _LIVE[:] = ["ACC-USD", "ACC-UYU"]
+    assert seeded_client.post("/api/v1/sync").status_code == 200
+    body = seeded_client.get("/api/v1/clientes").json()
+    assert sorted(a["account_number"] for c in body for a in c["accounts"]) == [
+        "ACC-USD",
+        "ACC-UYU",
+    ]
+
+
 def test_antenna_transferable_after_90_days(seeded_client):
     body = seeded_client.get("/api/v1/clientes").json()
     antennas = [t for a in body[0]["accounts"] for t in a["antennas"]]
