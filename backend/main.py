@@ -14,6 +14,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 import session_store
@@ -326,17 +327,30 @@ def rename_antenna(kit_number: str, payload: AntennaNameIn, db: Session = Depend
 def sync_status(db: Session = Depends(get_db)):
     """Estado de la sesión y de la última sincronización."""
     state = db.query(SyncState).first()
+    # SQLite guarda UTC sin zona; el panel lo interpretaba como hora local y
+    # mostraba la sincronización 3 h en el futuro. Se marca como UTC al salir.
+    last_sync = state.last_sync.replace(tzinfo=timezone.utc) if state and state.last_sync else None
     return SyncStatusOut(
         has_session=session_store.has_session(),
-        last_sync=state.last_sync if state else None,
+        last_sync=last_sync,
         accounts=state.accounts if state else 0,
         antennas=state.antennas if state else 0,
     )
 
 
+# Dos syncs a la vez chocan en SQLite ("database is locked"): el reintento del
+# panel mientras el anterior seguía corriendo devolvía 500.
+# shortcut: sólo cubre POST /sync; el loop de worker.py (cada 2 h) no lo consulta.
+_sync_running = False
+
+
 @app.post("/api/v1/sync")
 async def trigger_sync(db: Session = Depends(get_db)):
     """Sincroniza ahora mismo contra el portal (requiere sesión guardada)."""
+    global _sync_running
+    if _sync_running:
+        raise HTTPException(status_code=409, detail="Ya hay una sincronización en curso.")
+
     cookies = session_store.load()
     if not cookies:
         raise HTTPException(
@@ -345,6 +359,7 @@ async def trigger_sync(db: Session = Depends(get_db)):
         )
 
     client = PortalClient(cookies)
+    _sync_running = True
     try:
         stats = await sync_once(client, db)
     except SessionExpired as exc:
@@ -353,7 +368,17 @@ async def trigger_sync(db: Session = Depends(get_db)):
             status_code=409,
             detail="Sesión de Starlink vencida. Vuelve a pegar la cookie.",
         ) from exc
+    except OperationalError as exc:
+        # El loop de worker.py también escribe (arranca con un sync al iniciar):
+        # si se cruzan, SQLite espera busy_timeout y falla. Reintentar alcanza.
+        if "database is locked" not in str(exc):
+            raise
+        raise HTTPException(
+            status_code=409,
+            detail="Hay otra sincronización en curso. Espera un minuto y reintenta.",
+        ) from exc
     finally:
+        _sync_running = False
         await client.aclose()
 
     state = db.query(SyncState).first()

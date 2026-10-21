@@ -47,12 +47,10 @@ export default function SessionBar() {
       await refreshStatus();
       router.refresh();
     } catch (err) {
-      const httpStatus = (err as { response?: { status?: number } })?.response?.status;
-      setMessage(
-        httpStatus === 409
-          ? 'Sesión vencida: vuelve a pegar la cookie.'
-          : 'Falló la sincronización.'
-      );
+      // El backend ya manda el motivo (cookie vencida, sync en curso, DB ocupada).
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response
+        ?.data?.detail;
+      setMessage(detail ?? 'Falló la sincronización.');
       await refreshStatus();
     } finally {
       setBusy(false);

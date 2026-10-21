@@ -8,8 +8,9 @@ from sqlalchemy.pool import StaticPool
 
 import main
 from database import Base, get_db
-from models import Account, Antenna
+from models import Account, Antenna, SyncState
 from portal_client import SessionExpired
+from sqlalchemy.exc import OperationalError
 
 
 def _seed(db):
@@ -56,7 +57,9 @@ def seeded_client():
             session.close()
 
     main.app.dependency_overrides[get_db] = override
-    yield TestClient(main.app)
+    client = TestClient(main.app)
+    client.test_session = TestSession
+    yield client
     main.app.dependency_overrides.clear()
 
 
@@ -92,11 +95,43 @@ async def _session_expired(*args, **kwargs):
     raise SessionExpired("401")
 
 
+async def _db_locked(*args, **kwargs):
+    raise OperationalError("UPDATE accounts", {}, Exception("database is locked"))
+
+
 def test_manual_sync_expired_session_returns_409(seeded_client, monkeypatch):
     """Cookie guardada pero vencida: 409 para que el panel pida pegar una nueva."""
     monkeypatch.setattr("main.session_store.load", lambda *a, **k: {"a": "b"})
     monkeypatch.setattr("main.sync_once", _session_expired)
     assert seeded_client.post("/api/v1/sync").status_code == 409
+
+
+def test_manual_sync_rejects_concurrent_run(seeded_client, monkeypatch):
+    """Doble clic / reintento durante un sync: 409, no un 500 por DB bloqueada."""
+    monkeypatch.setattr("main.session_store.load", lambda *a, **k: {"a": "b"})
+    monkeypatch.setattr("main._sync_running", True)
+    r = seeded_client.post("/api/v1/sync")
+    assert r.status_code == 409
+    assert "en curso" in r.json()["detail"]
+
+
+def test_manual_sync_database_locked_returns_409(seeded_client, monkeypatch):
+    """El loop de worker.py no mira la guarda: si se cruzan, 409 y no 500."""
+    monkeypatch.setattr("main.session_store.load", lambda *a, **k: {"a": "b"})
+    monkeypatch.setattr("main.sync_once", _db_locked)
+    r = seeded_client.post("/api/v1/sync")
+    assert r.status_code == 409
+    assert main._sync_running is False  # el finally libera la guarda
+
+
+def test_sync_status_last_sync_sale_en_utc(seeded_client):
+    """SQLite guarda UTC sin zona y el panel lo mostraba como hora local."""
+    db = seeded_client.test_session()
+    db.add(SyncState(last_sync=datetime(2026, 10, 21, 1, 49, 15), accounts=1, antennas=1))
+    db.commit()
+    db.close()
+    last_sync = seeded_client.get("/api/v1/sync-status").json()["last_sync"]
+    assert last_sync.endswith(("Z", "+00:00"))
 
 
 def test_antenna_transferable_after_90_days(seeded_client):

@@ -97,8 +97,16 @@ icono. Causas y solución:
 
 Si el badge dice OK pero el panel muestra datos viejos: abrí el panel y usá el
 botón flotante *Traer cookie y sincronizar* (el sync tarda minutos y recorre
-cuentas una por una); el worker además resincroniza solo cada 2 horas. Tras
-**actualizar la extensión** hay que recargarla en `chrome://extensions` (ícono
+cuentas una por una); el worker además resincroniza solo cada 2 horas.
+
+Si al tocar *Sincronizar ahora* el panel dice **"Ya hay una sincronización en
+curso"** (HTTP 409) no es una falla: el worker también sincroniza al arrancar y
+cada 2 horas, y SQLite no admite dos escrituras a la vez. Esperá un minuto y
+reintentá. Un sync completo tarda entre 20 y 90 segundos según cuántas cuentas
+tenga la sesión; *Última sincronización* se muestra en tu hora local (el backend
+la guarda en UTC).
+
+Tras **actualizar la extensión** hay que recargarla en `chrome://extensions` (ícono
 🔄) para que corra el código nuevo.
 
 ## Seguridad
