@@ -1,5 +1,5 @@
 fastapi>=0.115.0
-uvicorn[standard]>=0.30.0
+uvicorn[standard]>=0.54.0
 # <2.1: la linea 2.1 exige Python >=3.11 y el runbook apunta a Ubuntu 22.04 (3.10).
 sqlalchemy>=2.0.0,<2.1
 pydantic>=2.0.0
