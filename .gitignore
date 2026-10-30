@@ -45,3 +45,5 @@ __pycache__/
 # Sistema operativo
 Thumbs.db
 .DS_Store
+
+dev-*.log

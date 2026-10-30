@@ -52,6 +52,14 @@ const kindOf = (c: Client): Kind => {
   return 'espera';
 };
 
+// Acento de la tarjeta: primero lo que hay que cobrar, después lo que vence ya.
+const accentOf = (c: Client) =>
+  owes(c) || c.is_suspended
+    ? 'border-l-2 border-l-red-500/70'
+    : vencen72h(c)
+      ? 'border-l-2 border-l-amber-500/70'
+      : 'border-l-2 border-l-emerald-500/50';
+
 // region_code vive en la cuenta; un cliente con cuentas en dos países sale en los dos.
 const countriesOf = (c: Client) =>
   Array.from(new Set(c.accounts.map((a) => a.region_code).filter(Boolean) as string[]));
@@ -135,17 +143,17 @@ export default function ClientList({ clients }: { clients: Client[] }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-2">
-        <span className="text-xs text-gray-500 uppercase tracking-wider w-10">País</span>
+        <span className="text-[11px] text-zinc-500 uppercase tracking-wider w-10">País</span>
         <ChipRow items={countryChips} value={country} onChange={setCountry} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        <span className="text-xs text-gray-500 uppercase tracking-wider w-10">Tipo</span>
+        <span className="text-[11px] text-zinc-500 uppercase tracking-wider w-10">Tipo</span>
         <ChipRow items={kindChips} value={kind} onChange={setKind} />
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-gray-500 text-sm">Sin resultados.</p>
+        <p className="text-zinc-500 text-sm">Sin resultados.</p>
       ) : (
         <div className="space-y-6">
           {filtered.map((c) => (
@@ -172,10 +180,10 @@ function ChipRow<T extends string>({
         <button
           key={c.key}
           onClick={() => onChange(c.key)}
-          className={`px-3 py-1.5 rounded-lg text-sm border ${
+          className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
             value === c.key
-              ? 'bg-accent-blue/20 border-accent-blue text-accent-blue'
-              : 'border-dark-600 text-gray-400 hover:text-gray-200'
+              ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-200'
+              : 'border-white/10 text-zinc-400 hover:text-zinc-200 hover:border-white/20'
           }`}
         >
           {c.label}
@@ -193,23 +201,23 @@ function ClientBlock({ client }: { client: Client }) {
   const g = client.gestion;
 
   return (
-    <section className="card">
+    <section className={`card ${accentOf(client)}`}>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3">
-        <h2 className="text-lg font-bold text-white">{client.client_name}</h2>
+        <h2 className="text-base font-semibold text-white">{client.client_name}</h2>
         {client.is_suspended && <span className="badge-offline">Suspendido</span>}
         {isPaused(client) && <span className="badge-degraded">Pausado</span>}
         {!g.is_administered && <span className="badge-degraded">Solo acceso</span>}
         {g.is_paid_by_us && <span className="badge-degraded">Paga Omar</span>}
         {vencen72h(client) && <span className="badge-offline">Vence &lt;72h</span>}
-        <span className="text-xs text-gray-500">{antennas} antena(s)</span>
+        <span className="text-xs text-zinc-500">{antennas} antena(s)</span>
         {regions.length > 0 && (
-          <span className="text-xs text-gray-500">País: {regions.join(' / ')}</span>
+          <span className="text-xs text-zinc-500">País: {regions.join(' / ')}</span>
         )}
         {client.currencies.length > 0 && (
-          <span className="text-xs text-gray-500">Monedas: {client.currencies.join(' / ')}</span>
+          <span className="text-xs text-zinc-500">Monedas: {client.currencies.join(' / ')}</span>
         )}
         {client.next_due_date && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-zinc-500">
             Próximo vencimiento: {fmtDate(client.next_due_date)}
           </span>
         )}
@@ -218,7 +226,7 @@ function ClientBlock({ client }: { client: Client }) {
       <div className="space-y-4">
         {client.accounts.map((a) => (
           <div key={a.account_number}>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400 mb-1">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-400 mb-1">
               <span className="font-mono text-gray-300">{a.account_number}</span>
               {a.account_name !== client.client_name && <span>({a.account_name})</span>}
               {a.is_billing_suspended && <span className="text-red-400">Pago pendiente</span>}
@@ -230,7 +238,7 @@ function ClientBlock({ client }: { client: Client }) {
 
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-gray-500 text-xs uppercase tracking-wider">
+                <tr className="text-zinc-500 text-xs uppercase tracking-wider">
                   <th className="text-left py-1 font-medium">Kit / Subscripción</th>
                   <th className="text-left py-1 font-medium">Modelo</th>
                   <th className="text-left py-1 font-medium">Plan</th>
@@ -265,20 +273,20 @@ function AntennaRow({ antenna }: { antenna: AntennaOut }) {
 
   return (
     <>
-      <tr className="border-t border-dark-600">
+      <tr className="border-t border-white/10">
         <td className="py-1.5 font-mono text-gray-300">
           {antenna.kit_number}
           {antenna.service_line_number && (
-            <div className="text-xs text-gray-500">{antenna.service_line_number}</div>
+            <div className="text-xs text-zinc-500">{antenna.service_line_number}</div>
           )}
-          {antenna.nickname && <div className="text-xs text-gray-500">✦ {antenna.nickname}</div>}
+          {antenna.nickname && <div className="text-xs text-zinc-500">✦ {antenna.nickname}</div>}
           <NameEditor antenna={antenna} />
         </td>
         <td className="py-1.5">{antenna.model}</td>
         <td className="py-1.5">
           {antenna.plan ?? '—'}
           {antenna.activation_date && (
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-zinc-500">
               Activa: {fmtDate(antenna.activation_date)} ({daysSince(antenna.activation_date)}d)
             </div>
           )}
@@ -292,7 +300,7 @@ function AntennaRow({ antenna }: { antenna: AntennaOut }) {
           {hasCycles && (
             <button
               onClick={() => setCyclesOpen((v) => !v)}
-              className="block text-xs text-accent-blue hover:underline ml-auto"
+              className="block text-xs text-indigo-300 hover:underline ml-auto"
             >
               ver ciclos ({antenna.cycles.length})
             </button>
@@ -318,11 +326,11 @@ function AntennaRow({ antenna }: { antenna: AntennaOut }) {
         </td>
       </tr>
       {cyclesOpen && hasCycles && (
-        <tr className="bg-dark-800/40">
+        <tr className="bg-white/[0.03]">
           <td colSpan={7} className="py-2">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-gray-500 uppercase tracking-wider">
+                <tr className="text-zinc-500 uppercase tracking-wider">
                   <th className="text-left py-0.5 font-medium">Desde</th>
                   <th className="text-left py-0.5 font-medium">Hasta</th>
                   <th className="text-right py-0.5 font-medium">Consumo</th>
@@ -365,7 +373,7 @@ function NameEditor({ antenna }: { antenna: AntennaOut }) {
   return (
     <div className="mt-0.5 flex items-center gap-1 max-w-[14rem]">
       <input
-        className="w-32 bg-dark-700 border border-dark-600 rounded px-1.5 py-0.5 text-xs text-gray-200 focus:border-accent-blue outline-none"
+        className="w-32 bg-dark-700 border border-white/10 rounded px-1.5 py-0.5 text-xs text-gray-200 focus:border-accent-blue outline-none"
         placeholder="nombre propio…"
         value={value}
         onChange={(e) => {
@@ -377,7 +385,7 @@ function NameEditor({ antenna }: { antenna: AntennaOut }) {
           if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
         }}
       />
-      {status === 'saving' && <span className="text-xs text-gray-500">…</span>}
+      {status === 'saving' && <span className="text-xs text-zinc-500">…</span>}
       {status === 'saved' && <span className="text-xs text-green-400">✓</span>}
       {status === 'error' && <span className="text-xs text-red-400">!</span>}
     </div>

@@ -10,18 +10,18 @@ module.exports = {
       colors: {
         dark: {
           900: '#0a0a0f',
-          800: '#12121a',
-          700: '#1a1a25',
-          600: '#22222f',
-          500: '#2a2a3a',
-          400: '#3a3a4f',
+          800: '#0f0f14',
+          700: '#141420',
+          600: '#22222c',
+          500: '#2e2e3a',
+          400: '#3c3c4a',
         },
         accent: {
-          blue: '#3b82f6',
-          green: '#22c55e',
-          yellow: '#eab308',
-          red: '#ef4444',
-          purple: '#a855f7',
+          blue: '#818cf8',
+          green: '#34d399',
+          yellow: '#fbbf24',
+          red: '#f87171',
+          purple: '#c084fc',
         },
       },
       fontFamily: {

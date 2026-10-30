@@ -10,7 +10,7 @@ export default function PanelMenu() {
 
   return (
     <button
-      className="btn-secondary"
+      className="btn-secondary shadow-lg shadow-black/40"
       style={{ position: 'fixed', left: 12, bottom: 12, zIndex: 9999 }}
       onClick={async () => {
         try {
