@@ -17,7 +17,7 @@ const daysSince = (iso: string) =>
 const hoursUntil = (iso: string) =>
   (new Date(iso).getTime() - Date.now()) / 3_600_000;
 
-type Filter = 'todas' | 'suspendidas' | 'pausadas' | 'vencen';
+type Filter = 'todas' | 'deben' | 'aldia' | 'suspendidas' | 'pausadas' | 'vencen';
 
 // Suspendida = pago/suscripción suspendida. Pausada (standby) es otro estado.
 const isSuspended = (c: Client) =>
@@ -29,6 +29,12 @@ const isPaused = (c: Client) =>
 const vencen72h = (c: Client) =>
   c.next_due_date != null && hoursUntil(c.next_due_date) <= 72 && hoursUntil(c.next_due_date) >= 0;
 
+// El saldo es por cuenta, no por antena: el cliente debe si alguna cuenta debe.
+const owes = (c: Client) => c.accounts.some((a) => (a.balance_due ?? 0) > 0);
+
+// Los que pagan antes van primero; sin fecha de pago, al final.
+const dueKey = (c: Client) => (c.next_due_date ? new Date(c.next_due_date).getTime() : Infinity);
+
 export default function ClientList({ clients }: { clients: Client[] }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('todas');
@@ -36,9 +42,12 @@ export default function ClientList({ clients }: { clients: Client[] }) {
 
   const filtered = useMemo(() => {
     let list = clients;
+    if (filter === 'deben') list = list.filter(owes);
+    if (filter === 'aldia') list = list.filter((c) => !owes(c));
     if (filter === 'suspendidas') list = list.filter(isSuspended);
     if (filter === 'pausadas') list = list.filter(isPaused);
     if (filter === 'vencen') list = list.filter(vencen72h);
+    if (filter === 'deben' || filter === 'aldia') list = [...list].sort((a, b) => dueKey(a) - dueKey(b));
     if (!needle) return list;
     return list.filter(
       (c) =>
@@ -56,6 +65,8 @@ export default function ClientList({ clients }: { clients: Client[] }) {
 
   const chips: { key: Filter; label: string }[] = [
     { key: 'todas', label: `Todas (${clients.length})` },
+    { key: 'deben', label: `Deben (${clients.filter(owes).length})` },
+    { key: 'aldia', label: `Al día (${clients.filter((c) => !owes(c)).length})` },
     { key: 'suspendidas', label: `Suspendidas (${clients.filter(isSuspended).length})` },
     { key: 'pausadas', label: `Pausadas (${clients.filter(isPaused).length})` },
     { key: 'vencen', label: `Vencen <72h (${clients.filter(vencen72h).length})` },

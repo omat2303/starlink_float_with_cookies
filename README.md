@@ -5,6 +5,11 @@ sola pantalla**, agrupadas por cliente, con plan, tipo de antena, consumo,
 vencimiento, saldo y estado. Sincroniza contra el portal cada 2 horas, así no hay
 que entrar cuenta por cuenta.
 
+Los chips de arriba filtran por **Deben** (alguna cuenta con saldo pendiente) y
+**Al día** (saldo 0), además de Todas, Suspendidas, Pausadas y Vencen <72h. En las
+dos vistas de saldo la lista va ordenada por fecha de pago: quien paga el día 4
+aparece antes que quien paga el 20.
+
 > Todo cuelga de endpoints **privados** del portal de Starlink (los mismos que usa
 > su web). No hay API pública: si Starlink los cambia, hay que ajustar los parsers
 > de `backend/portal_parsers.py`.
