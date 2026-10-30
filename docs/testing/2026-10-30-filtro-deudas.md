@@ -40,8 +40,10 @@ lista de deudores; y que los que pagan el día 4 salgan primero.
   `2026-11-04` (100, 70, 80 y 60 en sus monedas), luego `2026-11-06` (40).
   Que Deben + Al día sume el total confirma que la clasificación no pierde
   clientes.
-- No se pudo verificar el render en navegador desde esta sesión (sin MCP de
-  browser): queda pendiente abrir `localhost:3000` y tocar los dos chips.
+- Verificado en el panel real (`localhost:3000`, Chrome): los chips aparecen
+  como `Deben (30)` y `Al día (27)`, y al activar Deben la lista empieza por los
+  que vencen el `04/11/2026` (pedro romero, alber brito 70,00 USD, jesica tovar),
+  no por orden alfabético ni de monto.
 
 ## Límites conocidos
 
