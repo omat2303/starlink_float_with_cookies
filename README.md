@@ -10,6 +10,11 @@ Los chips de arriba filtran por **Deben** (alguna cuenta con saldo pendiente) y
 dos vistas de saldo la lista va ordenada por fecha de pago: quien paga el día 4
 aparece antes que quien paga el 20.
 
+Debajo hay dos filas más que se combinan con esas: **País** (VE, UY, CO, PE, CL,
+AR… sale de los datos, no está fijo) y **Tipo** (Residencial, Itinerante, Mixto y
+En espera / pausadas). Un cliente con antenas residenciales e itinerantes queda
+en Mixto, con sus cuentas juntas.
+
 > Todo cuelga de endpoints **privados** del portal de Starlink (los mismos que usa
 > su web). No hay API pública: si Starlink los cambia, hay que ajustar los parsers
 > de `backend/portal_parsers.py`.

@@ -35,9 +35,32 @@ const owes = (c: Client) => c.accounts.some((a) => (a.balance_due ?? 0) > 0);
 // Los que pagan antes van primero; sin fecha de pago, al final.
 const dueKey = (c: Client) => (c.next_due_date ? new Date(c.next_due_date).getTime() : Infinity);
 
+type Kind = 'todos' | 'residencial' | 'itinerante' | 'mixto' | 'espera';
+
+const planKind = (plan: string | null) =>
+  plan?.startsWith('Residencial') ? 'res' : plan?.startsWith('Itinerante') ? 'iti' : 'otro';
+
+// Res = sólo residencial, Iti = sólo itinerante, Mixto = tiene de las dos (una sola
+// tarjeta con sus cuentas juntas), En espera = pausadas/sin plan res-iti.
+const kindOf = (c: Client): Kind => {
+  const plans = c.accounts.flatMap((a) => a.antennas.map((t) => planKind(t.plan)));
+  const res = plans.includes('res');
+  const iti = plans.includes('iti');
+  if (res && iti) return 'mixto';
+  if (res) return 'residencial';
+  if (iti) return 'itinerante';
+  return 'espera';
+};
+
+// region_code vive en la cuenta; un cliente con cuentas en dos países sale en los dos.
+const countriesOf = (c: Client) =>
+  Array.from(new Set(c.accounts.map((a) => a.region_code).filter(Boolean) as string[]));
+
 export default function ClientList({ clients }: { clients: Client[] }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('todas');
+  const [country, setCountry] = useState('todos');
+  const [kind, setKind] = useState<Kind>('todos');
   const needle = query.trim().toLowerCase();
 
   const filtered = useMemo(() => {
@@ -47,6 +70,8 @@ export default function ClientList({ clients }: { clients: Client[] }) {
     if (filter === 'suspendidas') list = list.filter(isSuspended);
     if (filter === 'pausadas') list = list.filter(isPaused);
     if (filter === 'vencen') list = list.filter(vencen72h);
+    if (country !== 'todos') list = list.filter((c) => countriesOf(c).includes(country));
+    if (kind !== 'todos') list = list.filter((c) => kindOf(c) === kind);
     if (filter === 'deben' || filter === 'aldia') list = [...list].sort((a, b) => dueKey(a) - dueKey(b));
     if (!needle) return list;
     return list.filter(
@@ -61,7 +86,7 @@ export default function ClientList({ clients }: { clients: Client[] }) {
           )
         )
     );
-  }, [clients, needle, filter]);
+  }, [clients, needle, filter, country, kind]);
 
   const chips: { key: Filter; label: string }[] = [
     { key: 'todas', label: `Todas (${clients.length})` },
@@ -70,6 +95,31 @@ export default function ClientList({ clients }: { clients: Client[] }) {
     { key: 'suspendidas', label: `Suspendidas (${clients.filter(isSuspended).length})` },
     { key: 'pausadas', label: `Pausadas (${clients.filter(isPaused).length})` },
     { key: 'vencen', label: `Vencen <72h (${clients.filter(vencen72h).length})` },
+  ];
+
+  const countryChips = [
+    { key: 'todos', label: 'Todos' },
+    ...Array.from(new Set(clients.flatMap(countriesOf)))
+      .map((cc) => ({ key: cc, label: cc, n: clients.filter((c) => countriesOf(c).includes(cc)).length }))
+      .sort((a, b) => b.n - a.n)
+      .map(({ key, label, n }) => ({ key, label: `${label} (${n})` })),
+  ];
+
+  const kindChips: { key: Kind; label: string }[] = [
+    { key: 'todos', label: 'Todos' },
+    {
+      key: 'residencial',
+      label: `Residencial (${clients.filter((c) => kindOf(c) === 'residencial').length})`,
+    },
+    {
+      key: 'itinerante',
+      label: `Itinerante (${clients.filter((c) => kindOf(c) === 'itinerante').length})`,
+    },
+    { key: 'mixto', label: `Mixto (${clients.filter((c) => kindOf(c) === 'mixto').length})` },
+    {
+      key: 'espera',
+      label: `En espera / pausadas (${clients.filter((c) => kindOf(c) === 'espera').length})`,
+    },
   ];
 
   return (
@@ -81,19 +131,17 @@ export default function ClientList({ clients }: { clients: Client[] }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        {chips.map((c) => (
-          <button
-            key={c.key}
-            onClick={() => setFilter(c.key)}
-            className={`px-3 py-1.5 rounded-lg text-sm border ${
-              filter === c.key
-                ? 'bg-accent-blue/20 border-accent-blue text-accent-blue'
-                : 'border-dark-600 text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            {c.label}
-          </button>
-        ))}
+        <ChipRow items={chips} value={filter} onChange={setFilter} />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        <span className="text-xs text-gray-500 uppercase tracking-wider w-10">País</span>
+        <ChipRow items={countryChips} value={country} onChange={setCountry} />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <span className="text-xs text-gray-500 uppercase tracking-wider w-10">Tipo</span>
+        <ChipRow items={kindChips} value={kind} onChange={setKind} />
       </div>
 
       {filtered.length === 0 ? (
@@ -106,6 +154,34 @@ export default function ClientList({ clients }: { clients: Client[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+function ChipRow<T extends string>({
+  items,
+  value,
+  onChange,
+}: {
+  items: { key: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <>
+      {items.map((c) => (
+        <button
+          key={c.key}
+          onClick={() => onChange(c.key)}
+          className={`px-3 py-1.5 rounded-lg text-sm border ${
+            value === c.key
+              ? 'bg-accent-blue/20 border-accent-blue text-accent-blue'
+              : 'border-dark-600 text-gray-400 hover:text-gray-200'
+          }`}
+        >
+          {c.label}
+        </button>
+      ))}
+    </>
   );
 }
 
