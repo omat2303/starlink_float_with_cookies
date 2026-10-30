@@ -8,20 +8,22 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Variante AdminCN: los tokens viejos apuntan a la escala zinc para que
+        // el resto de componentes cambie de look sin tocarlos uno por uno.
         dark: {
-          900: '#0a0a0f',
-          800: '#12121a',
-          700: '#1a1a25',
-          600: '#22222f',
-          500: '#2a2a3a',
-          400: '#3a3a4f',
+          900: '#09090b',
+          800: '#0f0f12',
+          700: '#18181b',
+          600: '#27272a',
+          500: '#3f3f46',
+          400: '#52525b',
         },
         accent: {
-          blue: '#3b82f6',
-          green: '#22c55e',
-          yellow: '#eab308',
-          red: '#ef4444',
-          purple: '#a855f7',
+          blue: '#e4e4e7',
+          green: '#34d399',
+          yellow: '#fbbf24',
+          red: '#f87171',
+          purple: '#a1a1aa',
         },
       },
       fontFamily: {
