@@ -7,6 +7,10 @@ Todavía no hay una instancia desplegada: ver [docs/deployment](docs/deployment/
 
 ## [Sin publicar]
 
+### Corregido
+
+- El sync automático no actualizaba cada 2 h cuando el primer intento fallaba: dormía 2 h *después de cualquier* intento, así que un DNS caído al despertar la máquina dejaba el panel viejo media mañana. Ahora reintenta a los 5 min. Y cada sync automático escribe `SyncState`, así que *Última sincronización* ya no muestra sólo los syncs manuales. Detalle en [docs/testing/2026-10-31-auto-sync-2h.md](docs/testing/2026-10-31-auto-sync-2h.md).
+
 ### Seguridad
 
 - `follow-redirects` (dependencia transitiva de `axios` en el frontend) se sube de 1.16.1 a 1.16.2 por [GHSA-mrwp-f3q8-3g9p](https://github.com/advisories/GHSA-mrwp-f3q8-3g9p): severidad alta, descartaba `sensitiveHeaders` y podía reenviar credenciales en una redirección. Era la causa del job `Frontend` en rojo. Sólo cambia el `package-lock.json`; el `package.json` no declara `follow-redirects`.

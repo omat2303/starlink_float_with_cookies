@@ -1,5 +1,7 @@
+import asyncio
 from datetime import datetime
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -176,6 +178,50 @@ def test_cuentas_que_ya_no_estan_en_el_portal_no_se_muestran(seeded_client, monk
         "ACC-USD",
         "ACC-UYU",
     ]
+
+
+def test_auto_sync_reintenta_en_5_min_si_falla_de_red(seeded_client, monkeypatch):
+    """Un DNS caído al despertar la máquina costaba 2 h de panel viejo."""
+    delays = []
+
+    async def _sin_red(*args, **kwargs):
+        raise httpx.ConnectError("[Errno 11001] getaddrinfo failed")
+
+    async def _sleep(seconds):
+        delays.append(seconds)
+        if len(delays) == 2:
+            raise asyncio.CancelledError  # corta el loop infinito
+
+    monkeypatch.setattr("main.SessionLocal", seeded_client.test_session)
+    monkeypatch.setattr("main.session_store.load", lambda *a, **k: {"a": "b"})
+    monkeypatch.setattr("main.PortalClient", _FakePortal)
+    monkeypatch.setattr("main.sync_once", _sin_red)
+    monkeypatch.setattr("main.asyncio.sleep", _sleep)
+
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(main.auto_sync_loop())
+    assert delays == [main.SYNC_RETRY_SECONDS, main.SYNC_RETRY_SECONDS]
+
+
+def test_auto_sync_actualiza_ultima_sincronizacion(seeded_client, monkeypatch):
+    """Sin esto el panel decía "última sincronización" sólo de los syncs manuales."""
+
+    async def _sleep(seconds):
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr("main.SessionLocal", seeded_client.test_session)
+    monkeypatch.setattr("main.session_store.load", lambda *a, **k: {"a": "b"})
+    monkeypatch.setattr("main.PortalClient", _FakePortal)
+    monkeypatch.setattr("main.sync_once", _sync_ok)
+    monkeypatch.setattr("main.asyncio.sleep", _sleep)
+
+    _LIVE[:] = ["ACC-USD"]
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(main.auto_sync_loop())
+
+    body = seeded_client.get("/api/v1/sync-status").json()
+    assert body["last_sync"] is not None
+    assert body["accounts"] == 1
 
 
 def test_antenna_transferable_after_90_days(seeded_client):

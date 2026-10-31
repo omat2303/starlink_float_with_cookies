@@ -20,11 +20,11 @@ from sqlalchemy.orm import Session
 import session_store
 from auth_routes import router as auth_router
 from config import startup_check
-from database import Base, engine, ensure_schema, get_db
+from database import Base, SessionLocal, engine, ensure_schema, get_db
 from models import Account, Antenna, Gestion, SyncState
 from panel_auth import router as panel_router
 from portal_client import PortalClient, SessionExpired
-from worker import start_sync_loop, sync_once
+from worker import sync_once
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,13 +32,61 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+SYNC_INTERVAL_SECONDS = 7200  # 2 h, igual que worker
+SYNC_RETRY_SECONDS = 300  # 5 min: al despertar la máquina la red/DNS tarda en volver
+
+
+def _save_sync_state(db: Session, stats: dict) -> None:
+    """Marca la última sincronización (la lee la barra de estado del panel)."""
+    state = db.query(SyncState).first()
+    if state is None:
+        state = SyncState()
+        db.add(state)
+    state.last_sync = datetime.now(timezone.utc).replace(tzinfo=None)
+    state.accounts = stats["accounts"]
+    state.antennas = stats["antennas"]
+    db.commit()
+
+
+async def auto_sync_loop() -> None:
+    """Sincroniza cada 2 h y, si el intento falla, reintenta en 5 min.
+
+    El loop de ``worker.py`` dormía 2 h después de *cualquier* intento, así que
+    un fallo de DNS (típico al despertar la máquina, que reanuda justo cuando
+    vence el timer) dejaba el panel sin datos hasta 2 h después. Además sólo
+    ``POST /sync`` escribía ``SyncState``: los syncs automáticos no se veían en
+    "última sincronización". Ver docs/testing/2026-10-31-auto-sync-2h.md.
+    """
+    while True:
+        delay = SYNC_INTERVAL_SECONDS
+        db = SessionLocal()
+        try:
+            cookies = session_store.load()
+            if not cookies:
+                logger.info("sync automático: sin sesión guardada")
+                delay = SYNC_RETRY_SECONDS
+            else:
+                client = PortalClient(cookies)
+                try:
+                    stats = await sync_once(client, db)
+                    _save_sync_state(db, stats)
+                    logger.info("sync automático: %s", stats)
+                finally:
+                    await client.aclose()
+        except Exception:  # noqa: BLE001 - el loop nunca debe morir
+            logger.exception("sync automático falló; reintento en %d min", SYNC_RETRY_SECONDS // 60)
+            delay = SYNC_RETRY_SECONDS
+        finally:
+            db.close()
+        await asyncio.sleep(delay)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     startup_check()  # en producción, falla al arrancar si falta un secreto
     Base.metadata.create_all(bind=engine)
     ensure_schema()
-    task = asyncio.create_task(start_sync_loop())
+    task = asyncio.create_task(auto_sync_loop())
     logger.info("StarPanel listo")
     yield
     task.cancel()
@@ -406,14 +454,7 @@ async def trigger_sync(db: Session = Depends(get_db)):
         _sync_running = False
         await client.aclose()
 
-    state = db.query(SyncState).first()
-    if state is None:
-        state = SyncState()
-        db.add(state)
-    state.last_sync = datetime.now(timezone.utc).replace(tzinfo=None)
-    state.accounts = stats["accounts"]
-    state.antennas = stats["antennas"]
-    db.commit()
+    _save_sync_state(db, stats)
     return stats
 
 
