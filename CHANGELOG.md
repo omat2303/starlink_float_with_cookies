@@ -7,6 +7,10 @@ Todavía no hay una instancia desplegada: ver [docs/deployment](docs/deployment/
 
 ## [Sin publicar]
 
+### Seguridad
+
+- `follow-redirects` (dependencia transitiva de `axios` en el frontend) se sube de 1.16.1 a 1.16.2 por [GHSA-mrwp-f3q8-3g9p](https://github.com/advisories/GHSA-mrwp-f3q8-3g9p): severidad alta, descartaba `sensitiveHeaders` y podía reenviar credenciales en una redirección. Era la causa del job `Frontend` en rojo. Sólo cambia el `package-lock.json`; el `package.json` no declara `follow-redirects`.
+
 ### Cambiado
 
 - El CI del backend ahora prueba Python 3.10 y 3.12: el runbook asume Ubuntu 22.04, que trae 3.10, y antes sólo se validaba 3.12.
