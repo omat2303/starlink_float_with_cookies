@@ -30,6 +30,8 @@ funcionando contra el mismo backend.
   tarjetas con degradado sutil y bordes `white/7%`, acento índigo en chips,
   botones y foco de inputs. Otra vez, los tokens viejos (`dark-*`, `accent-*`)
   se remapean en `tailwind.config.js` para no reescribir cada componente.
+- **Buscador**: además de cliente, kit, nombre propio y SL, ahora encuentra por
+  **número de cuenta** (`ACC-DF-…`) y por nombre de la cuenta.
 
 ## Por qué así
 
