@@ -30,6 +30,9 @@ aplicado al panel real, funcionando contra el mismo backend.
   sin tocarlos. Los chips de filtro y los bordes de tabla se ajustaron a mano en
   `ClientList`.
 
+- **Buscador**: además de cliente, kit, nombre propio y SL, ahora encuentra por
+  **número de cuenta** (`ACC-DF-…`) y por nombre de la cuenta.
+
 ## Por qué así
 
 - La navegación actual era un link "Gestiones y costos" en el header y un botón

@@ -77,8 +77,11 @@ export default function ClientList({ clients }: { clients: Client[] }) {
     return list.filter(
       (c) =>
         c.client_name.toLowerCase().includes(needle) ||
-        c.accounts.some((a) =>
-          a.antennas.some(
+        c.accounts.some(
+          (a) =>
+            a.account_number.toLowerCase().includes(needle) ||
+            a.account_name.toLowerCase().includes(needle) ||
+            a.antennas.some(
             (t) =>
               t.kit_number.toLowerCase().includes(needle) ||
               (t.custom_name ?? '').toLowerCase().includes(needle) ||
@@ -127,7 +130,7 @@ export default function ClientList({ clients }: { clients: Client[] }) {
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <input
           className="input max-w-md"
-          placeholder="Buscar cliente, kit, nombre o SL…"
+          placeholder="Buscar cliente, cuenta, kit o SL…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
