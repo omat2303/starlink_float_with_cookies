@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { api, type AntennaOut, type Client } from '@/lib/api';
+import { isUnlimited } from '@/lib/consumo';
+import Donut from './Donut';
 
 const gb = (value: number | null) => (value == null ? '—' : `${value.toFixed(1)} GB`);
 
@@ -290,16 +292,24 @@ function AntennaRow({ antenna }: { antenna: AntennaOut }) {
           )}
         </td>
         <td className="py-1.5 text-right">{gb(antenna.data_total_gb)}</td>
-        <td className="py-1.5 text-right">
-          {gb(antenna.data_cycle_gb)}
-          {hasCycles && (
-            <button
-              onClick={() => setCyclesOpen((v) => !v)}
-              className="block text-xs text-accent-blue hover:underline ml-auto"
-            >
-              ver ciclos ({antenna.cycles.length})
-            </button>
-          )}
+        <td className="py-1.5">
+          <div className="flex items-center justify-end gap-2">
+            <div className="text-right">
+              <div className="text-gray-300">{gb(antenna.data_cycle_gb)}</div>
+              <div className="text-xs text-gray-500">
+                {isUnlimited(antenna.data_limit_gb) ? 'ilimitado' : `de ${gb(antenna.data_limit_gb)}`}
+              </div>
+              {hasCycles && (
+                <button
+                  onClick={() => setCyclesOpen((v) => !v)}
+                  className="text-xs text-accent-blue hover:underline"
+                >
+                  ciclos ({antenna.cycles.length})
+                </button>
+              )}
+            </div>
+            <Donut consumed={antenna.data_cycle_gb} limit={antenna.data_limit_gb} size={42} />
+          </div>
         </td>
         <td className="py-1.5 pl-4">
           <span
